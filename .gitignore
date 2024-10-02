@@ -1,3 +1,6 @@
+venv
+.venv
+
 # Experiment files
 **/log.txt
 *.sqlite
