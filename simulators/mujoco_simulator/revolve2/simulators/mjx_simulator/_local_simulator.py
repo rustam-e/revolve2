@@ -4,10 +4,9 @@ import os
 
 from revolve2.simulation.scene import SimulationState
 from revolve2.simulation.simulator import Batch, Simulator
-import jax  # Added import for jax
 
 from ._simulate_manual_scene import simulate_manual_scene
-from ._simulate_scene import simulate_scene  # Updated to use the correct simulate_scene file
+from ._simulate_scene import simulate_scene
 from .viewers import ViewerType
 
 
@@ -99,7 +98,7 @@ class LocalSimulator(Simulator):
             ) as executor:
                 futures = [
                     executor.submit(
-                        simulate_scene,  # Updated function to call
+                        simulate_scene,  # This is the function to call, followed by the parameters of the function
                         scene_index,
                         scene,
                         self._headless,
@@ -118,8 +117,8 @@ class LocalSimulator(Simulator):
                 results = [future.result() for future in futures]
         else:
             results = [
-                simulate_scene(  # Updated function to call
-                    scene_index,
+                simulate_scene(
+                    scene_index,  # This is the function to call, followed by the parameters of the function
                     scene,
                     self._headless,
                     batch.record_settings,

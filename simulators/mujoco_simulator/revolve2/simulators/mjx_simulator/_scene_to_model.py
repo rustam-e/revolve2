@@ -160,17 +160,16 @@ def scene_to_model(
 
     return model, mapping
 
+
 def _create_tmp_file(multi_body_system_model: mujoco.MjModel) -> mjcf.RootElement:
     """
     Create a temporary file.
 
-    MuJoCo can only save to a file, not directly to string.
+    MuJoCo can only save to a file, not directly to string,
 
     :param multi_body_system_model: The multi-body-system model.
     :return: The root element for the mujoco viewer.
     """
-    multi_body_system_mjcf = None  # Initialize with None to ensure it's always defined
-
     try:
         with tempfile.NamedTemporaryFile(
             mode="r+", delete=True, suffix="_revolve2_mujoco.mjcf"
@@ -187,18 +186,19 @@ def _create_tmp_file(multi_body_system_model: mujoco.MjModel) -> mjcf.RootElemen
             # an error catching is needed, in case the xml saving fails and crashes the program
             try:
                 mujoco.mj_saveLastXML(mjcf_file.name, multi_body_system_model)
-                multi_body_system_mjcf = mjcf.from_file(mjcf_file)
-            except Exception as e:
-                logging.info(repr(e))
-            finally:
-                # Ensure file is closed and deleted
+                multi_body_system_mjcf = mjcf.from_file(
+                    mjcf_file,
+                )
+                # On Windows, an open file can’t be deleted, and hence it has to be closed first before removing
                 mjcf_file.close()
                 os.remove(mjcf_file.name)
-
-    if multi_body_system_mjcf is None:
-        raise ValueError("Failed to create temporary file for the multi-body system model.")
-
+            except Exception as e:
+                logging.info(repr(e))
+                # On Windows, an open file can’t be deleted, and hence it has to be closed first before removing
+                mjcf_file.close()
+                os.remove(mjcf_file.name)
     return multi_body_system_mjcf
+
 
 def _add_planes(
     plane_geometries: list[GeometryPlane], fast_sim: bool, env_mjcf: mjcf.RootElement
