@@ -18,6 +18,9 @@ from revolve2.experimentation.logging import setup_logging
 from revolve2.experimentation.optimization.ea import population_management, selection
 from revolve2.experimentation.rng import make_rng_time_seed
 
+import time
+import cProfile
+import pstats
 
 class ParentSelector(Selector):
     """Selector class for parent selection."""
@@ -192,6 +195,11 @@ def main() -> None:
     # Set up logging.
     setup_logging(file_name="log.txt")
 
+    start_time = time.time()
+    profiler = cProfile.Profile()
+    profiler.enable()
+
+
     # Set up the random number generator.
     rng = make_rng_time_seed()
 
@@ -274,6 +282,20 @@ def main() -> None:
 
         # Increase the generation index counter.
         generation_index += 1
+
+
+    profiler.disable()
+    profiler.dump_stats("profile_results.prof")
+
+    # Later, you can inspect the results:
+    p = pstats.Stats("profile_results.prof")
+    p.strip_dirs().sort_stats("cumtime").print_stats(10)  # Sort by cumulative time and print top 10 functions
+    # Record end time
+    end_time = time.time()
+
+    # Calculate and print the execution time
+    execution_time = end_time - start_time
+    print(f"Execution time: {execution_time:.6f} seconds")
 
 
 if __name__ == "__main__":

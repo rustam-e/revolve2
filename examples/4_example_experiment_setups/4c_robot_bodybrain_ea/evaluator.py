@@ -8,7 +8,7 @@ from revolve2.modular_robot_simulation import (
     Terrain,
     simulate_scenes,
 )
-from revolve2.simulators.mujoco_simulator import LocalSimulator
+from revolve2.simulators.mjx_simulator import LocalSimulator
 from revolve2.standards import fitness_functions, terrains
 from revolve2.standards.simulation_parameters import make_standard_batch_parameters
 
