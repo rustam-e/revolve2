@@ -1,8 +1,6 @@
 import logging
 import math
-
 import cv2
-import mujoco
 import numpy as np
 import numpy.typing as npt
 
@@ -15,6 +13,11 @@ from ._render_backend import RenderBackend
 from ._scene_to_model import scene_to_model
 from ._simulation_state_impl import SimulationStateImpl
 from .viewers import CustomMujocoViewer, NativeMujocoViewer, ViewerType
+
+import mujoco
+from mujoco import mjx
+
+import jax
 
 
 def simulate_scene(
@@ -33,13 +36,13 @@ def simulate_scene(
     render_backend: RenderBackend = RenderBackend.EGL,
 ) -> list[SimulationState]:
     """
-    Simulate a scene.
+    Simulate a scene using MJX.
 
     :param scene_id: An id for this scene, unique between all scenes ran in parallel.
     :param scene: The scene to simulate.
     :param headless: If False, a viewer will be opened that allows a user to manually view and manually interact with the simulation.
     :param record_settings: If not None, recording will be done according to these settings.
-    :param start_paused: If true, the simulation will start in a paused state. Only makessense when headless is False.
+    :param start_paused: If true, the simulation will start in a paused state. Only makes sense when headless is False.
     :param control_step: The time between each call to the handle function of the scene handler. In seconds.
     :param sample_step: The time between each state sample of the simulation. In seconds.
     :param simulation_time: How long to simulate for. In seconds.
@@ -53,16 +56,18 @@ def simulate_scene(
     """
     logging.info(f"Simulating scene {scene_id}")
 
-    """Define mujoco data and model objects for simuating."""
+    """Define mjx data and model objects for simulating."""
     model, mapping = scene_to_model(
         scene, simulation_timestep, cast_shadows=cast_shadows, fast_sim=fast_sim
     )
     data = mujoco.MjData(model)
 
-    """Define a control interface for the mujoco simulation (used to control robots)."""
+
+    """Define a control interface for the MJX simulation (used to control robots)."""
     control_interface = ControlInterfaceImpl(
         data=data, abstraction_to_mujoco_mapping=mapping
     )
+
     """Make separate viewer for camera sensors."""
     camera_viewers = {
         camera.camera_id: OpenGLVision(
@@ -76,11 +81,9 @@ def simulate_scene(
     last_sample_time = 0.0
     last_video_time = 0.0  # time at which last video frame was saved
 
-    simulation_states: list[SimulationState] = (
-        []
-    )  # The measured states of the simulation
+    simulation_states: list[SimulationState] = []  # The measured states of the simulation
 
-    """If we dont have cameras and the backend is not set we go to the default GLFW."""
+    """If we don’t have cameras and the backend is not set, we go to the default GLFW."""
     if len(mapping.camera_sensor.values()) == 0:
         render_backend = RenderBackend.GLFW
 
@@ -92,9 +95,7 @@ def simulate_scene(
             case viewer_type.NATIVE:
                 viewer = NativeMujocoViewer
             case _:
-                raise ValueError(
-                    f"Viewer of type {viewer_type} not defined in _simulate_scene."
-                )
+                raise ValueError(f"Viewer of type {viewer_type} not defined in _simulate_scene.")
 
         viewer = viewer(
             model,
@@ -141,12 +142,17 @@ def simulate_scene(
             )
         )
 
+    jit_step = jax.jit(mjx.step)
+
+    mjx_model = mjx.put_model(model)
+    mjx_data = mjx.put_data(model, data)
+
     """After rendering the initial state, we enter the rendering loop."""
     while (time := data.time) < (
         float("inf") if simulation_time is None else simulation_time
     ):
 
-        # do control if it is time
+        # Do control if it is time
         if time >= last_control_time + control_step:
             last_control_time = math.floor(time / control_step) * control_step
 
@@ -155,7 +161,7 @@ def simulate_scene(
             )
             scene.handler.handle(simulation_state, control_interface, control_step)
 
-        # sample state if it is time
+        # Sample state if it is time
         if sample_step is not None:
             if time >= last_sample_time + sample_step:
                 last_sample_time = int(time / sample_step) * sample_step
@@ -168,20 +174,21 @@ def simulate_scene(
                 )
 
         # step simulation
-        mujoco.mj_step(model, data)
+        jit_step(mjx_model, mjx_data)
         # extract images from camera sensors.
+        data = mjx.get_data(model, mjx_data)
         images = {
             camera_id: camera_viewer.process(model, data)
             for camera_id, camera_viewer in camera_viewers.items()
         }
 
-        # render if not headless. also render when recording and if it time for a new video frame.
+        # Render if not headless, and also render when recording if it's time for a new video frame.
         if not headless or (
             record_settings is not None and time >= last_video_time + video_step
         ):
             viewer.render()
 
-        # capture video frame if it's time
+        # Capture video frame if it's time
         if record_settings is not None and time >= last_video_time + video_step:
             last_video_time = int(time / video_step) * video_step
 
@@ -201,7 +208,7 @@ def simulate_scene(
             img = np.flipud(img)[:, :, ::-1]
             video.write(img)
 
-    """Once simulation is done we close the potential viewer and release the potential video."""
+    """Once simulation is done, we close the potential viewer and release the video."""
     if not headless or record_settings is not None:
         viewer.close_viewer()
 
