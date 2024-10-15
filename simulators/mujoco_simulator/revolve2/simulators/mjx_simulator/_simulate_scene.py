@@ -16,6 +16,9 @@ from ._scene_to_model import scene_to_model
 from ._simulation_state_impl import SimulationStateImpl
 from .viewers import CustomMujocoViewer, NativeMujocoViewer, ViewerType
 
+import jax
+import mujoco
+from mujoco import mjx
 
 def simulate_scene(
     scene_id: int,
@@ -141,6 +144,11 @@ def simulate_scene(
             )
         )
 
+    # jit_step = jax.jit(mjx.step)
+    mjx_model = mjx.put_model(model)
+    mjx_data = mjx.put_data(model, data)
+
+
     """After rendering the initial state, we enter the rendering loop."""
     while (time := data.time) < (
         float("inf") if simulation_time is None else simulation_time
@@ -168,7 +176,11 @@ def simulate_scene(
                 )
 
         # step simulation
-        mujoco.mj_step(model, data)
+        mjx_data = mjx.step(mjx_model, mjx_data)
+        data = mjx.get_data(model, mjx_data)
+        print(f"{data.qpos}")
+
+        # mujoco.mj_step(model, data)
         # extract images from camera sensors.
         images = {
             camera_id: camera_viewer.process(model, data)
