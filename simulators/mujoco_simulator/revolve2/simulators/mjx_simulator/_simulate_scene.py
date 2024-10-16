@@ -156,7 +156,7 @@ def simulate_scene(
     print(mjx_data.qpos, type(mjx_data.qpos), mjx_data.qpos.devices())
 
     """After rendering the initial state, we enter the rendering loop."""
-    while (time := data.time) < (
+    while (time := mjx_data.time) < (
         float("inf") if simulation_time is None else simulation_time
     ):
 
