@@ -141,6 +141,7 @@ def simulate_scene(
             )
         )
 
+    print(data.qpos, type(data.qpos))
     """After rendering the initial state, we enter the rendering loop."""
     while (time := data.time) < (
         float("inf") if simulation_time is None else simulation_time

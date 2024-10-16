@@ -150,13 +150,12 @@ def simulate_scene(
     mujoco.mj_step(model, data)
     mjx_data =  mjx.put_data(model, data)
 
-    
-
     print(data.qpos, type(data.qpos))
-    print(mjx_data.qpos, type(mjx_data.qpos), mjx_data.qpos.devices())
+    # print(mjx_data.qpos, type(mjx_data.qpos), mjx_data.qpos.devices())
+    incrementer = 0
 
     """After rendering the initial state, we enter the rendering loop."""
-    while (time := data.time) < (
+    while (time := mjx_data.time) < (
         float("inf") if simulation_time is None else simulation_time
     ):
 
@@ -182,10 +181,14 @@ def simulate_scene(
                 )
 
         # step simulation
+        incrementer = incrementer + 1
+        print(incrementer)
         mjx_data = jit_step(mjx_model, mjx_data)
         data = mjx.get_data(model, mjx_data)
-        # print(f"{data.qpos}")
-
+        # print(f"time: {time}")
+        # print(f"mjx_data.time: {mjx_data.time}")
+        # print(data.qpos, type(data.qpos))
+        # print(mjx_data.qpos, type(mjx_data.qpos), mjx_data.qpos.devices())
         # mujoco.mj_step(model, data)
         # extract images from camera sensors.
         images = {
