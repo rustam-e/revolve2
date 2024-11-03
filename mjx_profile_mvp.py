@@ -383,7 +383,7 @@ def main(xml=_XML_HUMANOID, max_processes: int | None = None):
     if max_processes is None:
         max_processes = _CPU_COUNT
 
-    variants = [100, 1000, 4000]
+    variants = [100, 128, 1000, 1024, 2056, 4000, 4096]
     steps = [100, 500, 1000]
 
     cpus = {
