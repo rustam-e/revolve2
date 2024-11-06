@@ -1,7 +1,8 @@
 import time
 import multiprocessing
 from concurrent.futures.process import ProcessPoolExecutor as ProcPool
-
+import subprocess
+import csv
 import mujoco
 
 
@@ -362,55 +363,82 @@ def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
     # do not even time first step, takes too long, as long as step 2...N is faster we have viable option for GPU
     # because first step is fixed cost
     mjx_datas = step(mjx_model, mjx_datas)
+
     t = time.perf_counter()
 
     for i_steps in range(n_steps - 1):
         mjx_datas = step(mjx_model, mjx_datas)
+    elapsed = time.perf_counter() - t
 
-    return time.perf_counter() - t
+    # Capture peak GPU utilization using nvidia-smi
+    peak_gpu_utilization = get_peak_gpu_utilization()
+    
+    return elapsed, peak_gpu_utilization
 
+def get_peak_gpu_utilization():
+    try:
+        # Run `nvidia-smi` and capture peak utilization
+        output = subprocess.check_output("nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
+                                         shell=True).decode().strip()
+        peak_utilization = max(map(int, output.splitlines()))
+        return peak_utilization
+    except Exception as e:
+        print(f"Error capturing GPU utilization: {e}")
+        return None
 
 def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
-    cpu = cpu_profile(model_xml, n_variants, n_steps, max_processes)
-    gpu = gpu_profile(model_xml, n_variants, n_steps)
-    gpu_win = ("worse", "better")[gpu < cpu]
-    faster, slower = (cpu, gpu)[::2 * (gpu > cpu) - 1]
+    cpu_time = cpu_profile(model_xml, n_variants, n_steps, max_processes)
+    gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
+
+    # Determine which is faster
+    gpu_win = "better" if gpu_time < cpu_time else "worse"
+    faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
-    print(f"({n_variants}, {n_steps}): GPU {gpu_win} | {cpu=:.3f} {gpu=:.3f} | {percentage}%")
 
+    return {
+        "n_variants": n_variants,
+        "n_steps": n_steps,
+        "cpu_time": cpu_time,
+        "gpu_time": gpu_time,
+        "gpu_win": gpu_win,
+        "speed_difference": percentage,
+        "gpu_utilization": gpu_utilization
+    }
 
-def main(xml=_XML_HUMANOID, max_processes: int | None = None):
+def write_to_csv(filename, data):
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization"])
+        for entry in data:
+            writer.writerow([
+                entry["n_variants"],
+                entry["n_steps"],
+                entry["cpu_time"],
+                entry["gpu_time"],
+                entry["gpu_win"],
+                entry["speed_difference"],
+                entry["gpu_utilization"]
+            ])
+
+def main(model_xml, max_processes=None):
     if max_processes is None:
         max_processes = _CPU_COUNT
 
-    variants = [100, 128, 1000, 1024, 2056, 4000, 4096]
-    steps = [100, 500, 1000]
+    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    variants = [32, 1024, 2056, ]
+    steps = [32, 1024, 2056]
+    results = []
 
-    cpus = {
-        (n_variants, n_steps): cpu_profile(xml, n_variants, n_steps, max_processes)
-        for n_variants in variants
-        for n_steps in steps
-    }
+    for n_variants in variants:
+        for n_steps in steps:
+            result = compare(model_xml, n_variants, n_steps, max_processes)
+            results.append(result)
+            print(f"Logged result for n_variants={n_variants}, n_steps={n_steps}")
 
-    gpus = {
-        (n_variants, n_steps): gpu_profile(xml, n_variants, n_steps)
-        for n_variants in variants
-        for n_steps in steps
-    }
-
-    print("=" * 80)
-    for (n_variants, n_steps) in cpus:
-        cpu = cpus[n_variants, n_steps]
-        gpu = gpus[n_variants, n_steps]
-        gpu_better = ("worse", "better")[gpu < cpu]
-        faster, slower = (cpu, gpu)[::2 * (gpu > cpu) - 1]
-        percentage = int(100 * (slower / faster - 1))
-        print(f"{n_variants=} {n_steps=} | GPU {gpu_better} | {cpu=:.3f} {gpu=:.3f} | {percentage}%")
-
-    print("=" * 80)
-    if not any(cpus[k] > gpus[k] for k in cpus):
-        print("GPU is literally never better")
-
+    # Write all results to CSV
+    write_to_csv("performance_metrics.csv", results)
+    print("Results written to performance_metrics.csv")
 
 if __name__ == '__main__':
     main(_XML_HUMANOID)
