@@ -420,27 +420,38 @@ def write_to_csv(filename, data):
                 entry["gpu_utilization"]
             ])
 
-def main(model_xml, max_processes=None):
+def main(simulations, max_processes=None):
     if max_processes is None:
-        max_processes = _CPU_COUNT
-
+        max_processes = multiprocessing.cpu_count()
+    
     variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
     # variants = [32, 1024, 2056, 4096, 8192, 16384]
     # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
-    steps = [2056, 4096, 8192,]
-    # variants = [32, 1024, 2056]
-    # steps = [32, 1024]
+    steps = [2056, 4096, 8192]
     results = []
 
-    for n_variants in variants:
-        for n_steps in steps:
-            result = compare(model_xml, n_variants, n_steps, max_processes)
-            results.append(result)
-            print(f"Logged result for n_variants={n_variants}, n_steps={n_steps}")
+    # Loop through each simulation
+    for sim_name, model_xml in simulations.items():
+        print(f"Running benchmarks for simulation: {sim_name}")
+        for n_variants in variants:
+            for n_steps in steps:
+                try:
+                    result = compare(model_xml, n_variants, n_steps, max_processes)
+                    result['simulation'] = sim_name  # Add simulation name to the result
+                    results.append(result)
+                    print(f"Logged result for {sim_name}, n_variants={n_variants}, n_steps={n_steps}")
+                except Exception as e:
+                    print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
 
     # Write all results to CSV
     write_to_csv("performance_metrics.csv", results)
-    print("Results written to performance_metrics.csv")
+    print("All results written to performance_metrics.csv")
 
 if __name__ == '__main__':
-    main(_XML_HUMANOID)
+    # Define simulations to benchmark
+    simulations = {
+        "ant": _XML_ANT,
+        "ball": _XML_BALL,
+        "humanoid": _XML_HUMANOID,
+    }
+    main(simulations)
