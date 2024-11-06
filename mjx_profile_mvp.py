@@ -424,11 +424,12 @@ def main(model_xml, max_processes=None):
     if max_processes is None:
         max_processes = _CPU_COUNT
 
-    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
-    variants = [32, 1024, 2056, 4096, 8192, 16384]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    # variants = [32, 1024, 2056, 4096, 8192, 16384]
     # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    steps = [2056, 4096, 8192,]
     # variants = [32, 1024, 2056]
-    steps = [32, 1024]
+    # steps = [32, 1024]
     results = []
 
     for n_variants in variants:
