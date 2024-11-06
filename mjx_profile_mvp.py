@@ -360,7 +360,8 @@ def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
     mjx_datas = jax.vmap(lambda _: mjx_data.replace(ctrl=1))(jnp.arange(n_variants))
     step = jax.vmap(jax.jit(mjx.step), in_axes=(None, 0))
 
-    # Skip the first step timing, as it's often initialization
+    # do not even time first step, takes too long, as long as step 2...N is faster we have viable option for GPU
+    # because first step is fixed cost
     mjx_datas = step(mjx_model, mjx_datas)
 
     t = time.perf_counter()
@@ -369,14 +370,14 @@ def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
         mjx_datas = step(mjx_model, mjx_datas)
     elapsed = time.perf_counter() - t
 
-    # Capture peak GPU utilization
+    # Capture peak GPU utilization using nvidia-smi
     peak_gpu_utilization = get_peak_gpu_utilization()
     
     return elapsed, peak_gpu_utilization
 
 def get_peak_gpu_utilization():
     try:
-        # Use nvidia-smi to capture GPU utilization
+        # Run `nvidia-smi` and capture peak utilization
         output = subprocess.check_output("nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
                                          shell=True).decode().strip()
         peak_utilization = max(map(int, output.splitlines()))
@@ -389,6 +390,7 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
     cpu_time = cpu_profile(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
 
+    # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
@@ -422,7 +424,10 @@ def main(model_xml, max_processes=None):
     if max_processes is None:
         max_processes = _CPU_COUNT
 
-    variants = [32, 1024, 2056, 4096, 8192, 16384]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    # variants = [32, 1024, 2056, 4096, 8192, 16384]
+    # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    # variants = [32, 1024, 2056]
     steps = [32, 1024]
     results = []
 
@@ -432,6 +437,7 @@ def main(model_xml, max_processes=None):
             results.append(result)
             print(f"Logged result for n_variants={n_variants}, n_steps={n_steps}")
 
+    # Write all results to CSV
     write_to_csv("performance_metrics.csv", results)
     print("Results written to performance_metrics.csv")
 
