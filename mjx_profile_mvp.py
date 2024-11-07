@@ -337,7 +337,7 @@ def _cpu_profile_inner(model_xml: str, n_steps: int, batch_size: int):
         for _ in range(n_steps):
             mj_step(model, data)
 
-def cpu_profile(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 10):
+def cpu_profile(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 20):
     print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=}, {batch_size=}")
     assert 0 < max_processes <= _CPU_COUNT
 
