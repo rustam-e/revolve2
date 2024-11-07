@@ -10,3 +10,11 @@
 -r ./examples/4_example_experiment_setups/4d_robot_bodybrain_ea_database/requirements.txt
 -r ./examples/4_example_experiment_setups/4f_robot_brain_cmaes_database/requirements.txt
 -r ./examples/4_example_experiment_setups/4b_simple_ea_xor_database/requirements.txt
+psutil
+plotille
+mujoco-mjx
+jax
+jaxlib
+jax-cuda12-plugin[with_cuda]
+jax-cuda12-pjrt
+-f https://storage.googleapis.com/jax-releases/jax_nightly_releases.html
