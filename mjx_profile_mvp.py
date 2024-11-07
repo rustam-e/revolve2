@@ -1,6 +1,6 @@
 import time
 import multiprocessing
-from concurrent.futures.process import ProcessPoolExecutor as ProcPool
+from concurrent.futures import ProcessPoolExecutor 
 import subprocess
 import csv
 import mujoco
@@ -327,24 +327,26 @@ _XML_HUMANOID = """
 
 """
 
+def _cpu_profile_inner(model_xml: str, n_steps: int, batch_size: int):
+    from mujoco import MjModel, MjData, mj_step
+    model = MjModel.from_xml_string(model_xml)
 
-def _cpu_profile_inner(model_xml: str, n_steps: int):
-    model = mujoco.MjModel.from_xml_string(model_xml)
-    data = mujoco.MjData(model)
-    data.ctrl = 1
+    for _ in range(batch_size):
+        data = MjData(model)
+        data.ctrl = 1
+        for _ in range(n_steps):
+            mj_step(model, data)
 
-    for i_step in range(n_steps):
-        mujoco.mj_step(model, data)
-
-def cpu_profile(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
-    print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=} ...")
+def cpu_profile(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 10):
+    print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=}, {batch_size=}")
     assert 0 < max_processes <= _CPU_COUNT
 
     t = time.perf_counter()
-
-    with ProcPool(max_workers=max_processes) as pool:
-        futures = [pool.submit(_cpu_profile_inner, model_xml, n_steps) for _ in range(n_variants)]
-        _ = [fut.result() for fut in futures]
+    with ProcessPoolExecutor(max_workers=max_processes) as pool:
+        # Divide the total variants into batches
+        tasks = [pool.submit(_cpu_profile_inner, model_xml, n_steps, min(batch_size, n_variants - i))
+                 for i in range(0, n_variants, batch_size)]
+        _ = [task.result() for task in tasks]
 
     return time.perf_counter() - t
 
@@ -437,7 +439,8 @@ def main(simulations, max_processes=None):
         max_processes = multiprocessing.cpu_count()
     
     variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000, 1000000]
-    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000, 1000000]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536]
     # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
     steps = [32]
     results = []
