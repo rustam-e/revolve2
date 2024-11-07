@@ -452,22 +452,6 @@ def get_peak_gpu_utilization():
         print(f"Error capturing GPU utilization: {e}")
         return None
 
-def write_to_csv(filename, data):
-    with open(filename, mode="w", newline="") as file:
-        writer = csv.writer(file)
-        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization"])
-        for entry in data:
-            writer.writerow([
-                entry["simulation_name"],
-                entry["n_variants"],
-                entry["n_steps"],
-                entry["cpu_time"],
-                entry["gpu_time"],
-                entry["gpu_win"],
-                entry["speed_difference"],
-                entry["gpu_utilization"]
-            ])
-
 def log_result(result):
     log_message = (
         f"Simulation '{result['simulation_name']}' completed:\n"
@@ -475,6 +459,7 @@ def log_result(result):
         f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
         f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
         f"  GPU Utilization: {result['gpu_utilization']}%\n"
+        f"  GPU Utilization: {result['avg_cpu_usage']}%\n"
     )
     print(log_message)
     
