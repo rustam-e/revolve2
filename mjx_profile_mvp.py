@@ -422,12 +422,22 @@ def write_to_csv(filename, data):
                 entry["gpu_utilization"]
             ])
 
+def log_result(result):
+    log_message = (
+        f"Simulation '{result['simulation_name']}' completed:\n"
+        f"  Variants: {result['n_variants']}, Steps: {result['n_steps']}\n"
+        f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
+        f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
+        f"  GPU Utilization: {result['gpu_utilization']}%\n"
+    )
+    print(log_message)
+    
 def main(simulations, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
     
-    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 100000, 131072]
-    # variants = [32, 1024, 2056, 4096, 8192, 16384]
+    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 100000, 131072]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536]
     # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
     steps = [32]
     results = []
@@ -441,12 +451,12 @@ def main(simulations, max_processes=None):
                     result = compare(model_xml, n_variants, n_steps, max_processes, sim_name)
                     result['simulation'] = sim_name  # Add simulation name to the result
                     results.append(result)
-                    print(f"Logged result for {sim_name}, n_variants={n_variants}, n_steps={n_steps}")
+                    write_to_csv("performance_metrics.csv", results)
+                    log_result(result)  # Log detailed metrics for each result
                 except Exception as e:
                     print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
 
     # Write all results to CSV
-    write_to_csv("performance_metrics.csv", results)
     print("All results written to performance_metrics.csv")
 
 if __name__ == '__main__':
