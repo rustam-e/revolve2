@@ -337,24 +337,24 @@ def _cpu_profile_inner_batched(model_xml: str, n_steps: int, batch_size: int):
         for _ in range(n_steps):
             mj_step(model, data)
 
+def track_cpu_usage(profiling_event, cpu_usage_samples):
+    """Function to track CPU usage and store it in cpu_usage_samples."""
+    while profiling_event.is_set():
+        per_core_usage = psutil.cpu_percent(interval=1, percpu=True)
+        avg_usage = sum(per_core_usage) / len(per_core_usage)  # Average across all cores
+        cpu_usage_samples.append(avg_usage)
+
 def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 10):
     print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=}, {batch_size=}")
     assert 0 < max_processes <= _CPU_COUNT
 
     # Track CPU usage across all cores
-    cpu_usage_samples = []
-
-    def track_cpu_usage():
-        # Continuously sample CPU usage for all cores and store the average per sample
-        while profiling_event.is_set():
-            per_core_usage = psutil.cpu_percent(interval=1, percpu=True)
-            avg_usage = sum(per_core_usage) / len(per_core_usage)  # Average across all cores
-            cpu_usage_samples.append(avg_usage)
-
-    # Start tracking CPU usage in a separate process
+    cpu_usage_samples = multiprocessing.Manager().list()
     profiling_event = multiprocessing.Event()
     profiling_event.set()
-    cpu_tracker = multiprocessing.Process(target=track_cpu_usage)
+
+    # Start tracking CPU usage in a separate process
+    cpu_tracker = multiprocessing.Process(target=track_cpu_usage, args=(profiling_event, cpu_usage_samples))
     cpu_tracker.start()
 
     # Perform profiling
@@ -374,6 +374,7 @@ def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_proce
 
     print(f"Average CPU Usage during profiling (across all cores): {avg_cpu_usage:.2f}%")
     return total_time, avg_cpu_usage
+
 
 def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
