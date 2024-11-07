@@ -497,6 +497,6 @@ if __name__ == '__main__':
     simulations = {
         # "ant": _XML_ANT,
         "ball": _XML_BALL,
-        "humanoid": _XML_HUMANOID,
+        # "humanoid": _XML_HUMANOID,
     }
     main(simulations)
