@@ -19,6 +19,16 @@ import plotille
 # Load the CSV file
 df = pd.read_csv("performance_metrics.csv")
 
+# Set display option to show all rows if needed
+pd.set_option('display.max_rows', None)
+
+# Display all rows
+print(df)
+
+# Load the CSV file
+df = pd.read_csv("performance_metrics.csv")
+
+
 def plot_cpu_vs_steps(df):
     for simulation in df['simulation_name'].unique():
         subset = df[df['simulation_name'] == simulation]
