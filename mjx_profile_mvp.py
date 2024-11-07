@@ -327,7 +327,7 @@ _XML_HUMANOID = """
 
 """
 
-def _cpu_profile_inner(model_xml: str, n_steps: int, batch_size: int):
+def _cpu_profile_inner_batched(model_xml: str, n_steps: int, batch_size: int):
     from mujoco import MjModel, MjData, mj_step
     model = MjModel.from_xml_string(model_xml)
 
@@ -337,18 +337,82 @@ def _cpu_profile_inner(model_xml: str, n_steps: int, batch_size: int):
         for _ in range(n_steps):
             mj_step(model, data)
 
-def cpu_profile(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 20):
+def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 10):
     print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=}, {batch_size=}")
     assert 0 < max_processes <= _CPU_COUNT
 
-    t = time.perf_counter()
+    # Track CPU usage across all cores
+    cpu_usage_samples = []
+
+    def track_cpu_usage():
+        # Continuously sample CPU usage for all cores and store the average per sample
+        while profiling_event.is_set():
+            per_core_usage = psutil.cpu_percent(interval=1, percpu=True)
+            avg_usage = sum(per_core_usage) / len(per_core_usage)  # Average across all cores
+            cpu_usage_samples.append(avg_usage)
+
+    # Start tracking CPU usage in a separate process
+    profiling_event = multiprocessing.Event()
+    profiling_event.set()
+    cpu_tracker = multiprocessing.Process(target=track_cpu_usage)
+    cpu_tracker.start()
+
+    # Perform profiling
+    start_time = time.perf_counter()
     with ProcessPoolExecutor(max_workers=max_processes) as pool:
-        # Divide the total variants into batches
-        tasks = [pool.submit(_cpu_profile_inner, model_xml, n_steps, min(batch_size, n_variants - i))
+        tasks = [pool.submit(_cpu_profile_inner_batched, model_xml, n_steps, min(batch_size, n_variants - i))
                  for i in range(0, n_variants, batch_size)]
         _ = [task.result() for task in tasks]
+    total_time = time.perf_counter() - start_time
 
-    return time.perf_counter() - t
+    # Stop tracking CPU usage
+    profiling_event.clear()
+    cpu_tracker.join()
+
+    # Calculate average CPU usage across all cores
+    avg_cpu_usage = sum(cpu_usage_samples) / len(cpu_usage_samples) if cpu_usage_samples else 0
+
+    print(f"Average CPU Usage during profiling (across all cores): {avg_cpu_usage:.2f}%")
+    return total_time, avg_cpu_usage
+
+def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
+    cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
+    gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
+
+    # Determine which is faster
+    gpu_win = "better" if gpu_time < cpu_time else "worse"
+    faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
+    percentage = int(100 * (slower / faster - 1))
+
+    return {
+        "simulation_name": sim_name,
+        "n_variants": n_variants,
+        "n_steps": n_steps,
+        "cpu_time": cpu_time,
+        "gpu_time": gpu_time,
+        "gpu_win": gpu_win,
+        "speed_difference": percentage,
+        "gpu_utilization": gpu_utilization,
+        "avg_cpu_usage": avg_cpu_usage
+    }
+
+def write_to_csv(filename, data):
+    with open(filename, mode="w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization", "avg_cpu_usage"])
+        for entry in data:
+            writer.writerow([
+                entry["simulation_name"],
+                entry["n_variants"],
+                entry["n_steps"],
+                entry["cpu_time"],
+                entry["gpu_time"],
+                entry["gpu_win"],
+                entry["speed_difference"],
+                entry["gpu_utilization"],
+                entry["avg_cpu_usage"]
+            ])
+
 
 def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
     print(f"Running GPU profile with {n_variants=}, {n_steps=} ...")
@@ -387,26 +451,6 @@ def get_peak_gpu_utilization():
     except Exception as e:
         print(f"Error capturing GPU utilization: {e}")
         return None
-
-def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
-    cpu_time = cpu_profile(model_xml, n_variants, n_steps, max_processes)
-    gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
-
-    # Determine which is faster
-    gpu_win = "better" if gpu_time < cpu_time else "worse"
-    faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
-    percentage = int(100 * (slower / faster - 1))
-
-    return {
-        "simulation_name": sim_name,
-        "n_variants": n_variants,
-        "n_steps": n_steps,
-        "cpu_time": cpu_time,
-        "gpu_time": gpu_time,
-        "gpu_win": gpu_win,
-        "speed_difference": percentage,
-        "gpu_utilization": gpu_utilization
-    }
 
 def write_to_csv(filename, data):
     with open(filename, mode="w", newline="") as file:
