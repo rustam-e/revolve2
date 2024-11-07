@@ -14,7 +14,7 @@ print(df)
 def plot_time_vs_steps_variants(df):
     # CPU Time vs Steps
     plt.figure()
-    for simulation in df['simulation'].unique():
+    for simulation in df['simulation_name'].unique():
         subset = df[df['simulation'] == simulation]
         plt.scatter(subset['n_steps'], subset['cpu_time'], label=f'CPU - {simulation}', alpha=0.6)
     plt.xlabel('Number of Steps')
@@ -25,7 +25,7 @@ def plot_time_vs_steps_variants(df):
     
     # GPU Time vs Steps
     plt.figure()
-    for simulation in df['simulation'].unique():
+    for simulation in df['simulation_name'].unique():
         subset = df[df['simulation'] == simulation]
         plt.scatter(subset['n_steps'], subset['gpu_time'], label=f'GPU - {simulation}', alpha=0.6)
     plt.xlabel('Number of Steps')
@@ -36,7 +36,7 @@ def plot_time_vs_steps_variants(df):
     
     # CPU Time vs Variants
     plt.figure()
-    for simulation in df['simulation'].unique():
+    for simulation in df['simulation_name'].unique():
         subset = df[df['simulation'] == simulation]
         plt.scatter(subset['n_variants'], subset['cpu_time'], label=f'CPU - {simulation}', alpha=0.6)
     plt.xlabel('Number of Variants')
@@ -47,7 +47,7 @@ def plot_time_vs_steps_variants(df):
     
     # GPU Time vs Variants
     plt.figure()
-    for simulation in df['simulation'].unique():
+    for simulation in df['simulation_name'].unique():
         subset = df[df['simulation'] == simulation]
         plt.scatter(subset['n_variants'], subset['gpu_time'], label=f'GPU - {simulation}', alpha=0.6)
     plt.xlabel('Number of Variants')
