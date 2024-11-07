@@ -461,7 +461,7 @@ def log_result(result):
         f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
         f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
         f"  GPU Utilization: {result['gpu_utilization']}%\n"
-        f"  GPU Utilization: {result['avg_cpu_usage']}%\n"
+        f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
     )
     print(log_message)
     
