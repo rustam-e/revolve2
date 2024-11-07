@@ -4,6 +4,7 @@ from concurrent.futures import ProcessPoolExecutor
 import subprocess
 import csv
 import mujoco
+import psutil
 
 # Set the start method to spawn to avoid fork-related issues with JAX
 multiprocessing.set_start_method("spawn", force=True)
