@@ -424,7 +424,7 @@ def main(simulations, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
     
-    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 100000, 131072]
     # variants = [32, 1024, 2056, 4096, 8192, 16384]
     # steps = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
     steps = [32]
