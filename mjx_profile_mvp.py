@@ -386,7 +386,7 @@ def get_peak_gpu_utilization():
         print(f"Error capturing GPU utilization: {e}")
         return None
 
-def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
+def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     cpu_time = cpu_profile(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
 
@@ -396,6 +396,7 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
     percentage = int(100 * (slower / faster - 1))
 
     return {
+        "simulation_name": sim_name,
         "n_variants": n_variants,
         "n_steps": n_steps,
         "cpu_time": cpu_time,
@@ -408,9 +409,10 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int):
 def write_to_csv(filename, data):
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization"])
+        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization"])
         for entry in data:
             writer.writerow([
+                entry["simulation_name"],
                 entry["n_variants"],
                 entry["n_steps"],
                 entry["cpu_time"],
@@ -437,7 +439,7 @@ def main(simulations, max_processes=None):
         for n_variants in variants:
             for n_steps in steps:
                 try:
-                    result = compare(model_xml, n_variants, n_steps, max_processes)
+                    result = compare(model_xml, n_variants, n_steps, max_processes, sim_name)
                     result['simulation'] = sim_name  # Add simulation name to the result
                     results.append(result)
                     print(f"Logged result for {sim_name}, n_variants={n_variants}, n_steps={n_steps}")
