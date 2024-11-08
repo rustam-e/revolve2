@@ -495,8 +495,8 @@ def main(simulations, max_processes=None):
 if __name__ == '__main__':
     # Define simulations to benchmark
     simulations = {
-        "ant": _XML_ANT,
-        "ball": _XML_BALL,
+        # "ant": _XML_ANT,
+        # "ball": _XML_BALL,
         "humanoid": _XML_HUMANOID,
     }
     main(simulations)
