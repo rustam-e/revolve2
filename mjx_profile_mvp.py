@@ -469,10 +469,10 @@ def main(simulations, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
     
-    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000]
-    # steps = [32, 100, 500, 1024, 2000]
-    variants = [32, 1024, 2056, 4096, 8192, 16384,  32768, 65536, ]
-    steps = [32, 100, 500]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000]
+    # steps = [32, 100, 500, 1024, 2000, 4000]
+    # variants = [32, 1024, 2056, 4096, 8192, 16384,  32768, 65536, ]
+    steps = [1024, 2000, 4000]
     results = []
 
     # Loop through each simulation
@@ -496,7 +496,7 @@ if __name__ == '__main__':
     # Define simulations to benchmark
     simulations = {
         # "ant": _XML_ANT,
-        # "ball": _XML_BALL,
-        "humanoid": _XML_HUMANOID,
+        "ball": _XML_BALL,
+        # "humanoid": _XML_HUMANOID,
     }
     main(simulations)
