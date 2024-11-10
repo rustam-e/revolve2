@@ -196,6 +196,7 @@ def write_to_csv(filename, data, append=False):
                     entry["avg_cpu_usage"],
                     entry["gpu_cpu_ratio"]
                 ])
+            writer.writerow([])  # This writes an empty row
         else:
             # Appending combined results with a different header
             writer.writerow([
@@ -287,6 +288,39 @@ def log_combined_result(result):
     )
     print(log_message)
     
+def run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes=None):
+    results = []
+    # Loop through each simulation
+    try:
+        # Sequential profiling
+        sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+
+        # Log sequential results
+        results.append(sequential_results)
+        write_to_csv("performance_metrics.csv", results, append=False)
+        log_sequential_result(sequential_results) 
+    except Exception as e:
+        print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+    
+def run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes=None):
+    results = []
+    with open(file_path, mode="r") as file:
+      reader = csv.DictReader(file)
+      ratios = {
+          (row["simulation_name"], int(row["n_variants"]), int(row["n_steps"])): float(row["gpu_cpu_ratio"])
+          for row in reader
+      }
+    key = (sim_name, n_variants, n_steps)
+    if key in ratios:
+        gpu_cpu_ratio = ratios[key]
+        # Combined profiling using the ratio
+        combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio, sim_name)
+        
+        # Log combined results
+        results.append(combined_results)
+        write_to_csv("performance_metrics.csv", results, append=True)
+        log_combined_result(combined_results) 
+
 def main(simulations, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
@@ -295,52 +329,22 @@ def main(simulations, max_processes=None):
     # steps = [32, 100, 500, 1024, 2000, 4000]
     variants = [32, 1024]
     steps = [100]
-    results = []
     
     parser = argparse.ArgumentParser(description="Benchmark CPU and GPU profiling for MuJoCo models.")
     parser.add_argument("benchmark_type", choices=["sequential", "combined"], help="Type of benchmark to run")
     parser.add_argument("--file", default="performance_metrics.csv", help="CSV file to save results")
     args = parser.parse_args()
+    file_path = args.file
     
-    if args.benchmark_type == "sequential":
+    for sim_name, model_xml in simulations.items():
+        print(f"Running benchmarks for simulation: {sim_name}")
+        for n_variants in variants:
+            for n_steps in steps:
+                if args.benchmark_type == "sequential":
+                    run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes=None)
+                elif args.benchmark_type == "combined":
+                    run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes=None)
 
-        # Loop through each simulation
-        for sim_name, model_xml in simulations.items():
-            print(f"Running benchmarks for simulation: {sim_name}")
-            for n_variants in variants:
-                for n_steps in steps:
-                    try:
-                        # Sequential profiling
-                        sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
-                        gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
-      
-                        # Log sequential results
-                        results.append(sequential_results)
-                        write_to_csv("performance_metrics.csv", results, append=False)
-                        log_sequential_result(sequential_results) 
-                    except Exception as e:
-                        print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
-    elif args.benchmark_type == "combined":
-        with open(args.file, mode="r") as file:
-            reader = csv.DictReader(file)
-            ratios = {
-                (row["simulation_name"], int(row["n_variants"]), int(row["n_steps"])): float(row["gpu_cpu_ratio"])
-                for row in reader
-            }
-        for sim_name, model_xml in simulations.items():
-            for n_variants in variants:
-                for n_steps in steps:
-                    key = (sim_name, n_variants, n_steps)
-                    if key in ratios:
-                        gpu_cpu_ratio = ratios[key]
-                        # Combined profiling using the ratio
-                        combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio, sim_name)
-                        
-                        # Log combined results
-                        results.append(combined_results)
-                        write_to_csv("performance_metrics.csv", results, append=True)
-                        log_combined_result(combined_results) 
-            
     # Write all results to CSV
     print("All results written to performance_metrics.csv")
 
