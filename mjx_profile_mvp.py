@@ -380,14 +380,20 @@ def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_proce
 def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processes: int, gpu_cpu_ratio: float):
     gpu_variants = math.floor(n_variants*gpu_cpu_ratio)
     cpu_variants = n_variants - gpu_variants
+
+    # Start the timer before launching tasks
     start_time = time.perf_counter()
-    with ProcessPoolExecutor(max_workers=max_processes) as pool:
-        tasks = [pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes),
-          pool.submit(gpu_profile, model_xml, gpu_variants, n_steps),]
-    _ = [task.result() for task in tasks]
-    
-    cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, cpu_variants, n_steps, max_processes)
-    gpu_time, gpu_utilization = gpu_profile(model_xml, gpu_variants, n_steps)
+
+    # Run CPU and GPU profiling concurrently
+    with ProcessPoolExecutor(max_workers=2) as pool:
+        cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes)
+        gpu_future = pool.submit(gpu_profile, model_xml, gpu_variants, n_steps)
+        
+        # Retrieve results when both tasks complete
+        cpu_time, avg_cpu_usage = cpu_future.result()
+        gpu_time, gpu_utilization = gpu_future.result()
+
+    # End the timer after both tasks complete
     total_time = time.perf_counter() - start_time
     
     return total_time, cpu_time, gpu_time, avg_cpu_usage, gpu_utilization, gpu_variants, cpu_variants
