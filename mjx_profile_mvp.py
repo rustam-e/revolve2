@@ -196,7 +196,8 @@ def write_to_csv(filename, data, append=False):
                     entry["gpu_win"],
                     entry["speed_difference"],
                     entry["gpu_utilization"],
-                    entry["avg_cpu_usage"]
+                    entry["avg_cpu_usage"],
+                    entry["gpu_cpu_ratio"],
                 ])
                 
         else: 
@@ -208,7 +209,6 @@ def write_to_csv(filename, data, append=False):
                     entry["combined_gpu_time"],
                     entry["combined_avg_cpu_usage"],
                     entry["combined_gpu_utilization"],
-                    entry["gpu_cpu_ratio"],
                     entry["n_gpu_variants"],
                     entry["n_cpu_variants"]
                 ])
