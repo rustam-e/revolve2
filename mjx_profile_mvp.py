@@ -262,14 +262,20 @@ def get_peak_gpu_utilization():
         return 0  # Default to 0 if utilization cannot be retrieved
 
 
-def log_result(result):
+def log_sequential_result(result):
     log_message = (
         f"Simulation '{result['simulation_name']}' completed:\n"
-        # f"  Variants: {result['n_variants']}, Steps: {result['n_steps']}\n"
-        # f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
-        # f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
-        # f"  GPU Utilization: {result['gpu_utilization']}%\n"
-        # f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
+        f"  Variants: {result['n_variants']}, Steps: {result['n_steps']}\n"
+        f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
+        f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
+        f"  GPU Utilization: {result['gpu_utilization']}%\n"
+        f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
+    )
+    print(log_message)
+
+def log_combined_result(result):
+    log_message = (
+        f"Simulation '{result['simulation_name']}' completed:\n"
         f"  total_time: {result['total_time']}\n"
         f"  combined_cpu_time: {result['combined_cpu_time']}\n"
         f"  combined_gpu_time: {result['combined_gpu_time']}\n"
@@ -306,15 +312,12 @@ def main(simulations, max_processes=None):
                     try:
                         # Sequential profiling
                         sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
-                        print('sequential_results ',sequential_results)
                         gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
-                        print('sequential_results ',sequential_results)
-
       
                         # Log sequential results
                         results.append(sequential_results)
                         write_to_csv("performance_metrics.csv", results, append=False)
-                        log_result(sequential_results) 
+                        log_sequential_result(sequential_results) 
                     except Exception as e:
                         print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
     elif args.benchmark_type == "combined":
@@ -336,7 +339,7 @@ def main(simulations, max_processes=None):
                         # Log combined results
                         results.append(combined_results)
                         write_to_csv("performance_metrics.csv", results, append=True)
-                        log_result(combined_results) 
+                        log_combined_result(combined_results) 
             
     # Write all results to CSV
     print("All results written to performance_metrics.csv")
