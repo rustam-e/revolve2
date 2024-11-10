@@ -414,14 +414,16 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
         "combined_cpu_time": combined_cpu_time,
         "combined_gpu_time": combined_gpu_time,
         "combined_avg_cpu_usage": combined_avg_cpu_usage,
-        "combined_gpu_utilization": combined_gpu_utilization
+        "gpu_cpu_ratio": gpu_cpu_ratio,
+        "combined_gpu_utilization": combined_gpu_utilization,
+        "gpu_cpu_ratio": gpu_cpu_ratio
         
     }
 
 def write_to_csv(filename, data):
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization", "avg_cpu_usage"])
+        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization", "avg_cpu_usage","total_time","combined_cpu_time","combined_gpu_time","combined_avg_cpu_usage","combined_gpu_utilization", "gpu_cpu_ratio"])
         for entry in data:
             writer.writerow([
                 entry["simulation_name"],
@@ -432,7 +434,13 @@ def write_to_csv(filename, data):
                 entry["gpu_win"],
                 entry["speed_difference"],
                 entry["gpu_utilization"],
-                entry["avg_cpu_usage"]
+                entry["avg_cpu_usage"],
+                entry["total_time"],
+                entry["combined_cpu_time"],
+                entry["combined_gpu_time"],
+                entry["combined_avg_cpu_usage"],
+                entry["combined_gpu_utilization"]
+                entry["gpu_cpu_ratio"]
             ])
 
 
@@ -482,6 +490,12 @@ def log_result(result):
         f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
         f"  GPU Utilization: {result['gpu_utilization']}%\n"
         f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
+        f"  total_time: {result['total_time']}%\n"
+        f"  combined_cpu_time: {result['combined_cpu_time']}%\n"
+        f"  combined_gpu_time: {result['combined_gpu_time']}%\n"
+        f"  combined_avg_cpu_usage: {result['combined_avg_cpu_usage']}%\n"
+        f"  combined_gpu_utilization: {result['combined_gpu_utilization']}%\n"
+        f"  gpu_cpu_ratio: {result['gpu_cpu_ratio']}%\n"
     )
     print(log_message)
     
@@ -498,16 +512,16 @@ def main(simulations, max_processes=None):
     # Loop through each simulation
     for sim_name, model_xml in simulations.items():
         print(f"Running benchmarks for simulation: {sim_name}")
-          for n_variants in variants:
-              for n_steps in steps:
-                  try:
-                      result = compare(model_xml, n_variants, n_steps, max_processes, sim_name)
-                      result['simulation'] = sim_name  # Add simulation name to the result
-                      results.append(result)
-                      write_to_csv("performance_metrics.csv", results)
-                      log_result(result)  # Log detailed metrics for each result
-                  except Exception as e:
-                      print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+        for n_variants in variants:
+            for n_steps in steps:
+                try:
+                    result = compare(model_xml, n_variants, n_steps, max_processes, sim_name)
+                    result['simulation'] = sim_name  # Add simulation name to the result
+                    results.append(result)
+                    write_to_csv("performance_metrics.csv", results)
+                    log_result(result)  # Log detailed metrics for each result
+                except Exception as e:
+                    print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
                     
 
     # Write all results to CSV
