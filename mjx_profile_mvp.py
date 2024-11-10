@@ -385,14 +385,14 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     total_time = cpu_time + gpu_time
     
     
-    return total_time, cpu_time, gpu_time, avg_cpu_usage, gpu_utilization
+    return total_time, cpu_time, gpu_time, avg_cpu_usage, gpu_utilization, gpu_variants, cpu_variants
 
 def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
     
-    gpu_cpu_ratio = gpu_time / (gpu_time + cpu_time)
-    total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
+    gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
+    total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization, gpu_variants, cpu_variants  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
       
 
     # Determine which is faster
@@ -416,14 +416,34 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
         "combined_avg_cpu_usage": combined_avg_cpu_usage,
         "gpu_cpu_ratio": gpu_cpu_ratio,
         "combined_gpu_utilization": combined_gpu_utilization,
-        "gpu_cpu_ratio": gpu_cpu_ratio
+        "gpu_cpu_ratio": gpu_cpu_ratio,
+        "n_gpu_variants": gpu_variants,
+        "n_cpu_variants": cpu_variants
         
     }
 
 def write_to_csv(filename, data):
     with open(filename, mode="w", newline="") as file:
         writer = csv.writer(file)
-        writer.writerow(["simulation_name", "n_variants", "n_steps", "cpu_time", "gpu_time", "gpu_win", "speed_difference", "gpu_utilization", "avg_cpu_usage","total_time","combined_cpu_time","combined_gpu_time","combined_avg_cpu_usage","combined_gpu_utilization", "gpu_cpu_ratio"])
+        writer.writerow([
+          "simulation_name",
+          "n_variants",
+          "n_steps",
+          "cpu_time",
+          "gpu_time",
+          "gpu_win",
+          "speed_difference",
+          "gpu_utilization",
+          "avg_cpu_usage",
+          "total_time", 
+          "combined_cpu_time", 
+          "combined_gpu_time", 
+          "combined_avg_cpu_usage", 
+          "combined_gpu_utilization",
+          "gpu_cpu_ratio",
+          "n_gpu_variants",
+          "n_cpu_variants",
+          ])
         for entry in data:
             writer.writerow([
                 entry["simulation_name"],
@@ -441,6 +461,8 @@ def write_to_csv(filename, data):
                 entry["combined_avg_cpu_usage"],
                 entry["combined_gpu_utilization"],
                 entry["gpu_cpu_ratio"]
+                entry["n_gpu_variants"]
+                entry["n_cpu_variants"]
             ])
 
 
@@ -496,6 +518,8 @@ def log_result(result):
         f"  combined_avg_cpu_usage: {result['combined_avg_cpu_usage']}%\n"
         f"  combined_gpu_utilization: {result['combined_gpu_utilization']}%\n"
         f"  gpu_cpu_ratio: {result['gpu_cpu_ratio']}%\n"
+        f"  n_gpu_variants: {result['n_gpu_variants']}%\n"
+        f"  n_cpu_variants: {result['n_cpu_variants']}%\n"
     )
     print(log_message)
     
