@@ -112,6 +112,8 @@ def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_proces
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
     
+    gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
+    
     return {
         "simulation_name": sim_name,
         "n_variants": n_variants,
@@ -122,6 +124,7 @@ def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_proces
         "speed_difference": percentage,
         "gpu_utilization": gpu_utilization,
         "avg_cpu_usage": avg_cpu_usage, 
+        "gpu_cpu_ratio": gpu_cpu_ratio
     }
 
 # def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
