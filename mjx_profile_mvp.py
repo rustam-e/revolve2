@@ -106,16 +106,13 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
 def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
-    print('cpu_time: ', cpu_time)
 
     # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
-    print('gpu_time: ', gpu_time)
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
     
     gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
-    print('gpu_cpu_ratio: ', gpu_cpu_ratio)
     
     return {
         "simulation_name": sim_name,
@@ -309,7 +306,10 @@ def main(simulations, max_processes=None):
                     try:
                         # Sequential profiling
                         sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+                        print('sequential_results ',sequential_results)
                         gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
+                        print('sequential_results ',sequential_results)
+
       
                         # Log sequential results
                         results.append(sequential_results)
