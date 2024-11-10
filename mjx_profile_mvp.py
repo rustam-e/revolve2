@@ -168,27 +168,21 @@ def write_to_csv(filename, data, append=False):
     mode = 'a' if append else 'w'
     with open(filename, mode, newline="") as file:
         writer = csv.writer(file)
+
+        # If not appending, write the header for the sequential results
         if not append:
-            writer = csv.writer(file)
             writer.writerow([
-              "simulation_name",
-              "n_variants",
-              "n_steps",
-              "cpu_time",
-              "gpu_time",
-              "gpu_win",
-              "speed_difference",
-              "gpu_utilization",
-              "avg_cpu_usage",
-              "total_time", 
-              "combined_cpu_time", 
-              "combined_gpu_time", 
-              "combined_avg_cpu_usage", 
-              "combined_gpu_utilization",
-              "gpu_cpu_ratio",
-              "n_gpu_variants",
-              "n_cpu_variants",
-              ])
+                "simulation_name",
+                 "n_variants",
+                 "n_steps",
+                 "cpu_time",
+                 "gpu_time",
+                "gpu_win",
+                 "speed_difference",
+                 "gpu_utilization",
+                 "avg_cpu_usage",
+                 "gpu_cpu_ratio"
+            ])
             for entry in data:
                 writer.writerow([
                     entry["simulation_name"],
@@ -200,10 +194,21 @@ def write_to_csv(filename, data, append=False):
                     entry["speed_difference"],
                     entry["gpu_utilization"],
                     entry["avg_cpu_usage"],
-                    entry["gpu_cpu_ratio"],
+                    entry["gpu_cpu_ratio"]
                 ])
-                
-        else: 
+        else:
+            # Appending combined results with a different header
+            writer.writerow([
+                "simulation_name",
+                 "total_time",
+                 "combined_cpu_time",
+                 "combined_gpu_time",
+                "combined_avg_cpu_usage",
+                 "combined_gpu_utilization",
+                 "gpu_cpu_ratio",
+                "n_gpu_variants",
+                 "n_cpu_variants"
+            ])
             for entry in data:
                 writer.writerow([
                     entry["simulation_name"],
@@ -212,10 +217,11 @@ def write_to_csv(filename, data, append=False):
                     entry["combined_gpu_time"],
                     entry["combined_avg_cpu_usage"],
                     entry["combined_gpu_utilization"],
+                    entry["gpu_cpu_ratio"],
                     entry["n_gpu_variants"],
                     entry["n_cpu_variants"]
                 ])
-
+                
 def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
     print(f"Running GPU profile with {n_variants=}, {n_steps=} ...")
     from mujoco import mjx
