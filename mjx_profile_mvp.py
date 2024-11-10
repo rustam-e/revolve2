@@ -9,6 +9,7 @@ import math
 # Import the MuJoCo XML models from the new filea
 from mujoco_models import _XML_ANT, _XML_BALL, _XML_HUMANOID
 
+_CPU_COUNT = multiprocessing.cpu_count()
 
 # Set the start method to spawn to avoid fork-related issues with JAX
 multiprocessing.set_start_method("spawn", force=True)

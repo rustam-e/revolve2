@@ -1,5 +1,4 @@
 
-_CPU_COUNT = multiprocessing.cpu_count()
 _XML_ANT = """
     <mujoco model="ant">
       <compiler angle="degree" coordinate="local" inertiafromgeom="true"/>
