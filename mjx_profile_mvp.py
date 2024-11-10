@@ -511,14 +511,14 @@ def log_result(result):
         f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
         f"  GPU Utilization: {result['gpu_utilization']}%\n"
         f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
-        f"  total_time: {result['total_time']}%\n"
-        f"  combined_cpu_time: {result['combined_cpu_time']}%\n"
-        f"  combined_gpu_time: {result['combined_gpu_time']}%\n"
+        f"  total_time: {result['total_time']}\n"
+        f"  combined_cpu_time: {result['combined_cpu_time']}\n"
+        f"  combined_gpu_time: {result['combined_gpu_time']}\n"
         f"  combined_avg_cpu_usage: {result['combined_avg_cpu_usage']}%\n"
         f"  combined_gpu_utilization: {result['combined_gpu_utilization']}%\n"
-        f"  gpu_cpu_ratio: {result['gpu_cpu_ratio']}%\n"
-        f"  n_gpu_variants: {result['n_gpu_variants']}%\n"
-        f"  n_cpu_variants: {result['n_cpu_variants']}%\n"
+        f"  gpu_cpu_ratio: {result['gpu_cpu_ratio']* 100}%\n"
+        f"  n_gpu_variants: {result['n_gpu_variants']}\n"
+        f"  n_cpu_variants: {result['n_cpu_variants']}\n"
     )
     print(log_message)
     
