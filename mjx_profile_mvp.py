@@ -391,7 +391,6 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     gpu_variants = math.floor(n_variants*gpu_cpu_ratio)
     cpu_variants = n_variants - gpu_variants
 
-    time.sleep(1)  # Adjust delay as needed
     # Start the timer before launching tasks
     start_time = time.perf_counter()
     print(get_available_gpu_memory())
@@ -414,6 +413,7 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
     
     gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
+    time.sleep(30)  # Adjust delay as needed
     total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization, gpu_variants, cpu_variants  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
       
 
