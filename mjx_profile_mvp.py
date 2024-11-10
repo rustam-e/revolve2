@@ -396,7 +396,7 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     print(get_available_gpu_memory())
     # Run CPU and GPU profiling concurrently
     with ProcessPoolExecutor(max_workers=2) as pool:
-        cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes)
+        cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes/2)
         gpu_future = pool.submit(gpu_profile, model_xml, gpu_variants, n_steps)
         
         # Retrieve results when both tasks complete
