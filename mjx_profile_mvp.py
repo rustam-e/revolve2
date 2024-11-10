@@ -388,13 +388,12 @@ def get_available_gpu_memory():
 
 
 def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processes: int, gpu_cpu_ratio: float):
-    gpu_variants = math.floor(n_variants*gpu_cpu_ratio)
+    # Calculate the split based on ratio
+    gpu_variants = math.floor(n_variants * gpu_cpu_ratio)
     cpu_variants = n_variants - gpu_variants
 
     # Start the timer before launching tasks
     start_time = time.perf_counter()
-    print(get_available_gpu_memory())
-    # Run CPU and GPU profiling concurrently
     with ProcessPoolExecutor(max_workers=2) as pool:
         cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes // 2)
         gpu_future = pool.submit(gpu_profile, model_xml, gpu_variants, n_steps)
@@ -406,25 +405,25 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     # End the timer after both tasks complete
     total_time = time.perf_counter() - start_time
     
-    return total_time, cpu_time, gpu_time, avg_cpu_usage, gpu_utilization, gpu_variants, cpu_variants
+    return {
+        "total_time": total_time,
+        "cpu_time": cpu_time,
+        "gpu_time": gpu_time,
+        "avg_cpu_usage": avg_cpu_usage,
+        "gpu_utilization": gpu_utilization,
+        "n_gpu_variants": gpu_variants,
+        "n_cpu_variants": cpu_variants
+    }
 
-def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
-    # to do - re-enable once issue of failing gpu is fixed
+def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
     
-    # cpu_time= 10 # to do - remove
-    # gpu_time = 10 # to do - remove
-    
-    gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
-    total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization, gpu_variants, cpu_variants  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
-      
     # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
     
-
     return {
         "simulation_name": sim_name,
         "n_variants": n_variants,
@@ -433,18 +432,46 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
         "gpu_time": gpu_time,
         "gpu_win": gpu_win,
         "speed_difference": percentage,
-        # "gpu_utilization": gpu_utilization, - to do reenable
-        # "avg_cpu_usage": avg_cpu_usage, - to do reenable
-        "total_time": total_time,
-        "combined_cpu_time": combined_cpu_time,
-        "combined_gpu_time": combined_gpu_time,
-        "combined_avg_cpu_usage": combined_avg_cpu_usage,
-        "gpu_cpu_ratio": gpu_cpu_ratio,
-        "combined_gpu_utilization": combined_gpu_utilization,
-        "n_gpu_variants": gpu_variants,
-        "n_cpu_variants": cpu_variants
-        
+        "gpu_utilization": gpu_utilization,
+        "avg_cpu_usage": avg_cpu_usage, 
     }
+
+# def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
+#     # to do - re-enable once issue of failing gpu is fixed
+
+    
+#     # cpu_time= 10 # to do - remove
+#     # gpu_time = 10 # to do - remove
+    
+#     gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
+#     total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization, gpu_variants, cpu_variants  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
+      
+#     # Determine which is faster
+#     gpu_win = "better" if gpu_time < cpu_time else "worse"
+#     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
+#     percentage = int(100 * (slower / faster - 1))
+    
+
+#     return {
+#         "simulation_name": sim_name,
+#         "n_variants": n_variants,
+#         "n_steps": n_steps,
+#         "cpu_time": cpu_time,
+#         "gpu_time": gpu_time,
+#         "gpu_win": gpu_win,
+#         "speed_difference": percentage,
+#         # "gpu_utilization": gpu_utilization, - to do reenable
+#         # "avg_cpu_usage": avg_cpu_usage, - to do reenable
+#         "total_time": total_time,
+#         "combined_cpu_time": combined_cpu_time,
+#         "combined_gpu_time": combined_gpu_time,
+#         "combined_avg_cpu_usage": combined_avg_cpu_usage,
+#         "gpu_cpu_ratio": gpu_cpu_ratio,
+#         "combined_gpu_utilization": combined_gpu_utilization,
+#         "n_gpu_variants": gpu_variants,
+#         "n_cpu_variants": cpu_variants
+        
+#     }
 
 def write_to_csv(filename, data):
     with open(filename, mode="w", newline="") as file:
@@ -565,17 +592,29 @@ def main(simulations, max_processes=None):
         for n_variants in variants:
             for n_steps in steps:
                 try:
-                    result = compare(model_xml, n_variants, n_steps, max_processes, sim_name)
-                    result['simulation'] = sim_name  # Add simulation name to the result
-                    results.append(result)
+                    # Sequential profiling
+                    sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+                    gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
+   
+                    # Log sequential results
+                    results.append(sequential_results)
                     write_to_csv("performance_metrics.csv", results)
-                    log_result(result)  # Log detailed metrics for each result
+                    log_result(sequential_results) 
+                    
+                    # Combined profiling using the ratio
+                    combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
+                    
+                    # Log combined results
+                    results.append(combined_results)
+                    write_to_csv("performance_metrics.csv", results)
+                    log_result(combined_results) 
+
                 except Exception as e:
                     print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
-                    
 
     # Write all results to CSV
     print("All results written to performance_metrics.csv")
+
 
 if __name__ == '__main__':
     # Define simulations to benchmark
