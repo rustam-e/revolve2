@@ -93,8 +93,8 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     return {
         "simulation_name": sim_name,
         "total_time": total_time,
-        "cpu_time": cpu_time,
-        "gpu_time": gpu_time,
+        "combined_cpu_time": cpu_time,
+        "combined_gpu_time": gpu_time,
         "avg_cpu_usage": avg_cpu_usage,
         "gpu_utilization": gpu_utilization,
         "n_gpu_variants": gpu_variants,
@@ -246,9 +246,9 @@ def get_peak_gpu_utilization():
 def log_result(result):
     log_message = (
         f"Simulation '{result['simulation_name']}' completed:\n"
-        f"  Variants: {result['n_variants']}, Steps: {result['n_steps']}\n"
-        f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
-        f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
+        # f"  Variants: {result['n_variants']}, Steps: {result['n_steps']}\n"
+        # f"  CPU Time: {result['cpu_time']:.4f} s, GPU Time: {result['gpu_time']:.4f} s\n"
+        # f"  GPU is {result['gpu_win']} than CPU by {result['speed_difference']}%\n"
         # f"  GPU Utilization: {result['gpu_utilization']}%\n"
         # f"  CPU Utilization: {result['avg_cpu_usage']}%\n"
         f"  total_time: {result['total_time']}\n"
