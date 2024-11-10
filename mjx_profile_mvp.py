@@ -439,7 +439,7 @@ def write_to_csv(filename, data):
                 entry["combined_cpu_time"],
                 entry["combined_gpu_time"],
                 entry["combined_avg_cpu_usage"],
-                entry["combined_gpu_utilization"]
+                entry["combined_gpu_utilization"],
                 entry["gpu_cpu_ratio"]
             ])
 
