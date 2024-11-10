@@ -335,7 +335,7 @@ def main(simulations, max_processes=None):
     
     # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000, 1000000,2000000, 4000000]
     # steps = [32, 100, 500, 1024, 2000, 4000]
-    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]
+    variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000, 1000000]
     steps = [100]
     
     parser = argparse.ArgumentParser(description="Benchmark CPU and GPU profiling for MuJoCo models.")
