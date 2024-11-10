@@ -288,21 +288,25 @@ def log_combined_result(result):
     )
     print(log_message)
     
-def run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes=None):
+def run_sequential(simulations, variants, steps, max_processes=None):
     results = []
     # Loop through each simulation
-    try:
-        # Sequential profiling
-        sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+    for sim_name, model_xml in simulations.items():
+        print(f"Running benchmarks for simulation: {sim_name}")
+        for n_variants in variants:
+            for n_steps in steps:
+                try:
+                    # Sequential profiling
+                    sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
 
-        # Log sequential results
-        results.append(sequential_results)
-        write_to_csv("performance_metrics.csv", results, append=False)
-        log_sequential_result(sequential_results) 
-    except Exception as e:
-        print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+                    # Log sequential results
+                    results.append(sequential_results)
+                    log_sequential_result(sequential_results) 
+                except Exception as e:
+                    print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+    write_to_csv("performance_metrics.csv", results, append=False)
     
-def run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes=None):
+def run_combined(simulations, variants, steps, file_path, max_processes=None):
     results = []
     with open(file_path, mode="r") as file:
       reader = csv.DictReader(file)
@@ -310,16 +314,20 @@ def run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_proces
           (row["simulation_name"], int(row["n_variants"]), int(row["n_steps"])): float(row["gpu_cpu_ratio"])
           for row in reader
       }
-    key = (sim_name, n_variants, n_steps)
-    if key in ratios:
-        gpu_cpu_ratio = ratios[key]
-        # Combined profiling using the ratio
-        combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio, sim_name)
-        
-        # Log combined results
-        results.append(combined_results)
-        write_to_csv("performance_metrics.csv", results, append=True)
-        log_combined_result(combined_results) 
+    for sim_name, model_xml in simulations.items():
+      print(f"Running benchmarks for simulation: {sim_name}")
+      for n_variants in variants:
+          for n_steps in steps:
+              key = (sim_name, n_variants, n_steps)
+              if key in ratios:
+                  gpu_cpu_ratio = ratios[key]
+                  # Combined profiling using the ratio
+                  combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio, sim_name)
+                  
+                  # Log combined results
+                  results.append(combined_results)
+                  log_combined_result(combined_results) 
+      write_to_csv("performance_metrics.csv", results, append=True)
 
 def main(simulations, max_processes=None):
     if max_processes is None:
@@ -336,14 +344,10 @@ def main(simulations, max_processes=None):
     args = parser.parse_args()
     file_path = args.file
     
-    for sim_name, model_xml in simulations.items():
-        print(f"Running benchmarks for simulation: {sim_name}")
-        for n_variants in variants:
-            for n_steps in steps:
-                if args.benchmark_type == "sequential":
-                    run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes)
-                elif args.benchmark_type == "combined":
-                    run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes)
+    if args.benchmark_type == "sequential":
+        run_sequential(simulations, variants, steps, max_processes)
+    elif args.benchmark_type == "combined":
+        run_combined(simulations, variants, steps, file_path, max_processes)
 
     # Write all results to CSV
     print("All results written to performance_metrics.csv")
