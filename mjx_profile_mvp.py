@@ -593,15 +593,16 @@ def main(simulations, max_processes=None):
             for n_steps in steps:
                 try:
                     # Sequential profiling
-                    sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
-                    gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
+                    # sequential_results = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+                    # gpu_cpu_ratio = sequential_results["gpu_cpu_ratio"]
    
                     # Log sequential results
-                    results.append(sequential_results)
-                    write_to_csv("performance_metrics.csv", results)
-                    log_result(sequential_results) 
+                    # results.append(sequential_results)
+                    # write_to_csv("performance_metrics.csv", results)
+                    # log_result(sequential_results) 
                     
                     # Combined profiling using the ratio
+                    gpu_cpu_ratio = 0.5 # to do remove
                     combined_results = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
                     
                     # Log combined results
