@@ -314,7 +314,7 @@ def main(simulations, max_processes=None):
                         # Log sequential results
                         results.append(sequential_results)
                         write_to_csv("performance_metrics.csv", results, append=False)
-                        log_result(results) 
+                        log_result(sequential_results) 
                     except Exception as e:
                         print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
     elif args.benchmark_type == "combined":
