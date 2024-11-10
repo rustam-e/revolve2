@@ -377,13 +377,23 @@ def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_proce
     print(f"Average CPU Usage during profiling (across all cores): {avg_cpu_usage:.2f}%")
     return total_time, avg_cpu_usage
 
+def get_available_gpu_memory():
+    try:
+        output = subprocess.check_output("nvidia-smi --query-gpu=memory.free --format=csv,noheader,nounits",
+                                         shell=True).decode().strip()
+        return int(output.splitlines()[0]) 
+    except Exception as e:
+        print(f"Error checking available GPU memory: {e}")
+        return None
+
+
 def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processes: int, gpu_cpu_ratio: float):
     gpu_variants = math.floor(n_variants*gpu_cpu_ratio)
     cpu_variants = n_variants - gpu_variants
 
     # Start the timer before launching tasks
     start_time = time.perf_counter()
-
+    print(get_available_gpu_memory())
     # Run CPU and GPU profiling concurrently
     with ProcessPoolExecutor(max_workers=2) as pool:
         cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes)
