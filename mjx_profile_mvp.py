@@ -522,14 +522,16 @@ def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
 
 def get_peak_gpu_utilization():
     try:
-        # Run `nvidia-smi` and capture peak utilization
-        output = subprocess.check_output("nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
-                                         shell=True).decode().strip()
+        output = subprocess.check_output(
+            "nvidia-smi --query-gpu=utilization.gpu --format=csv,noheader,nounits",
+            shell=True
+        ).decode().strip()
         peak_utilization = max(map(int, output.splitlines()))
         return peak_utilization
     except Exception as e:
         print(f"Error capturing GPU utilization: {e}")
-        return None
+        return 0  # Default to 0 if utilization cannot be retrieved
+
 
 def log_result(result):
     log_message = (
