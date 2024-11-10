@@ -92,6 +92,7 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
     
     return {
         "simulation_name": sim_name,
+        "gpu_cpu_ratio":gpu_cpu_ratio,
         "total_time": total_time,
         "combined_cpu_time": cpu_time,
         "combined_gpu_time": gpu_time,
