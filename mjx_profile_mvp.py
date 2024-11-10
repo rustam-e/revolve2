@@ -110,7 +110,7 @@ def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_proces
 
     # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
-    print('gpu_cpu_ratio: ', gpu_cpu_ratio)
+    print('gpu_time: ', gpu_time)
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
     
