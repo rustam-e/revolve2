@@ -436,8 +436,8 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
         "gpu_time": gpu_time,
         "gpu_win": gpu_win,
         "speed_difference": percentage,
-        "gpu_utilization": gpu_utilization,
-        "avg_cpu_usage": avg_cpu_usage,
+        # "gpu_utilization": gpu_utilization, - to do reenable
+        # "avg_cpu_usage": avg_cpu_usage, - to do reenable
         "total_time": total_time,
         "combined_cpu_time": combined_cpu_time,
         "combined_gpu_time": combined_gpu_time,
