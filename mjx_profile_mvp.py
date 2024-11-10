@@ -341,9 +341,9 @@ def main(simulations, max_processes=None):
         for n_variants in variants:
             for n_steps in steps:
                 if args.benchmark_type == "sequential":
-                    run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes=None)
+                    run_sequential(sim_name, n_variants, n_steps, model_xml, max_processes)
                 elif args.benchmark_type == "combined":
-                    run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes=None)
+                    run_combined(sim_name, n_variants, n_steps, model_xml, file_path, max_processes)
 
     # Write all results to CSV
     print("All results written to performance_metrics.csv")
