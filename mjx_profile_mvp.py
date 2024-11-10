@@ -410,23 +410,20 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
 
 def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
     # to do - re-enable once issue of failing gpu is fixed
-    # cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
-    # gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
+    cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
+    gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
     
-    cpu_time= 10 # to do - remove
-    gpu_time = 10 # to do - remove
+    # cpu_time= 10 # to do - remove
+    # gpu_time = 10 # to do - remove
     
-    gpu_cpu_ratio = 0.5 #1 - gpu_time / (gpu_time + cpu_time)
+    gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
     total_time, combined_cpu_time, combined_gpu_time, combined_avg_cpu_usage, combined_gpu_utilization, gpu_variants, cpu_variants  = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio)
       
-    # time.sleep(30)  # Adjust delay as needed
-
     # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
     percentage = int(100 * (slower / faster - 1))
     
-    # time.sleep(30)  # Adjust delay as needed
 
     return {
         "simulation_name": sim_name,
