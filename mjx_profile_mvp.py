@@ -416,7 +416,6 @@ def compare(model_xml: str, n_variants: int, n_steps: int, max_processes: int, s
         "combined_avg_cpu_usage": combined_avg_cpu_usage,
         "gpu_cpu_ratio": gpu_cpu_ratio,
         "combined_gpu_utilization": combined_gpu_utilization,
-        "gpu_cpu_ratio": gpu_cpu_ratio,
         "n_gpu_variants": gpu_variants,
         "n_cpu_variants": cpu_variants
         
@@ -460,8 +459,8 @@ def write_to_csv(filename, data):
                 entry["combined_gpu_time"],
                 entry["combined_avg_cpu_usage"],
                 entry["combined_gpu_utilization"],
-                entry["gpu_cpu_ratio"]
-                entry["n_gpu_variants"]
+                entry["gpu_cpu_ratio"],
+                entry["n_gpu_variants"],
                 entry["n_cpu_variants"]
             ])
 
