@@ -95,8 +95,8 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
         "total_time": total_time,
         "combined_cpu_time": cpu_time,
         "combined_gpu_time": gpu_time,
-        "avg_cpu_usage": avg_cpu_usage,
-        "gpu_utilization": gpu_utilization,
+        "combined_avg_cpu_usage": avg_cpu_usage,
+        "combined_gpu_utilization": gpu_utilization,
         "n_gpu_variants": gpu_variants,
         "n_cpu_variants": cpu_variants
     }
