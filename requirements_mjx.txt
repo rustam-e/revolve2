@@ -1,5 +1,5 @@
 mujoco
-mojoco_mjx
+mujoco_mjx
 jax
 jaxlib
 jax[cuda12_pip]
