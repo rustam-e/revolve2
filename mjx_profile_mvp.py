@@ -8,7 +8,7 @@ import mujoco
 import psutil
 import math
 # Import the MuJoCo XML models from the new filea
-from mujoco_models import _XML_ANT, _XML_BALL, _XML_HUMANOID
+from mujoco_models import XML_BOX, XML_BOX_AND_BALL, XML_ARM_WITH_ROPE, XML_HUMANOID, XML_QUADROPED_VB
 
 _CPU_COUNT = multiprocessing.cpu_count()
 
@@ -333,10 +333,8 @@ def main(simulations, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
     
-    # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000, 512000, 1000000,2000000, 4000000]
-    # steps = [32, 100, 500, 1024, 2000, 4000]
     variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000]
-    steps = [100]
+    steps = [100, 500, 1000]
     
     parser = argparse.ArgumentParser(description="Benchmark CPU and GPU profiling for MuJoCo models.")
     parser.add_argument("benchmark_type", choices=["sequential", "combined"], help="Type of benchmark to run")
@@ -356,8 +354,11 @@ def main(simulations, max_processes=None):
 if __name__ == '__main__':
     # Define simulations to benchmark
     simulations = {
-        # "ant": _XML_ANT,
-        "ball": _XML_BALL,
-        # "humanoid": _XML_HUMANOID,
+        "BOX": XML_BOX,
+        "BOX_AND_BALL": XML_BOX_AND_BALL,
+        "ARM_WITH_ROPE": XML_ARM_WITH_ROPE,
+        "HUMANOID": XML_HUMANOID,
+        "QUADROPED_VB": XML_QUADROPED_VB,
+        
     }
     main(simulations)
