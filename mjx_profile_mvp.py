@@ -358,7 +358,7 @@ if __name__ == '__main__':
         # "BOX": XML_BOX,
         # "BOX_AND_BALL": XML_BOX_AND_BALL,
         # "ARM_WITH_ROPE": XML_ARM_WITH_ROPE,
-        "HUMANOID": XML_HUMANOID,
+        # "HUMANOID": XML_HUMANOID,
         "QUADROPED_VB": XML_QUADROPED_VB,
         
     }
