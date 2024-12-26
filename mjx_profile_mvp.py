@@ -334,7 +334,7 @@ def main(simulations, max_processes=None):
         max_processes = multiprocessing.cpu_count()
     
     # variants = [32, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072, 256000]
-    variants = [32, 1024, 2056, 4096, 8192]
+    variants = [32, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072]
     steps = [100, 500, 1000]
     
     parser = argparse.ArgumentParser(description="Benchmark CPU and GPU profiling for MuJoCo models.")
