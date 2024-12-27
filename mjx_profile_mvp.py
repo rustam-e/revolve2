@@ -347,18 +347,18 @@ def main(simulations, simulation_variants, max_processes=None):
 if __name__ == '__main__':
     # Define simulations to benchmark
     simulations = {
-        # "BOX": XML_BOX,
-        # "BOX_AND_BALL": XML_BOX_AND_BALL,
-        # "ARM_WITH_ROPE": XML_ARM_WITH_ROPE,
+        "BOX": XML_BOX,
+        "BOX_AND_BALL": XML_BOX_AND_BALL,
+        "ARM_WITH_ROPE": XML_ARM_WITH_ROPE,
         "HUMANOID": XML_HUMANOID,
     }
 
     # Allow different variant lists for each simulation
     simulation_variants = {
-        # "BOX": [32, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000],
-        # "BOX_AND_BALL": [32, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000],
-        # "ARM_WITH_ROPE": [32, 1024, 2056, 4096, 8192,  16384, 32768],
-        "HUMANOID": [332, 1024, 2056, 4096, 8192,  16384, 32768],
+        "BOX": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000, 512000],
+        "BOX_AND_BALL": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000, 512000],
+        "ARM_WITH_ROPE": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000],
+        "HUMANOID": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768],
     }
 
     main(simulations, simulation_variants)
