@@ -9,19 +9,20 @@ def plot_total_time_vs_variants(csv_path: str) -> None:
     # 2) Compute total variants
     df["n_variants"] = df["n_cpu_variants"] + df["n_gpu_variants"]
 
-    # 3) For each unique simulation_name, plot total_time vs. n_variants
+    # 3) For each unique simulation_name, plot total_time vs. n_variants with confidence intervals
     for simulation in df["simulation_name"].unique():
         subset = df[df["simulation_name"] == simulation]
 
         plt.figure(figsize=(8, 6))
 
-        # Use Seaborn for a line plot (with markers, no CI)
+        # Use Seaborn for a line plot with confidence intervals
         sns.lineplot(
             data=subset,
             x="n_variants",
             y="total_time",
             marker='o',
-            ci=None
+            ci="sd",  # Use "sd" to show standard deviation as confidence interval
+            err_style="band"  # Use a shaded band to represent CI
         )
 
         plt.title(f"Total Time vs. Number of Variants for {simulation}")
