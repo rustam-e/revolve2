@@ -7,7 +7,7 @@ def main(sequential_csv, combined_csv, output_prefix):
     # 1) --- Load & parse the "sequential" data ---
     df_seq = pd.read_csv(sequential_csv)
     # We assume the sequential CSV has:
-    #  simulation_name, n_variants, cpu_time, gpu_time, ...
+    #   simulation_name, n_variants, cpu_time, gpu_time, ...
     # We'll create two subsets: one for CPU, one for GPU.
 
     # Subset for CPU
@@ -24,31 +24,52 @@ def main(sequential_csv, combined_csv, output_prefix):
     df_seq_combined = pd.concat([df_seq_cpu, df_seq_gpu], ignore_index=True)
 
     # 2) --- Load & parse the "combined" data ---
-    df_comb = pd.read_csv(combined_csv)
-    # We assume the combined CSV has:
-    #  simulation_name, total_time, n_cpu_variants, n_gpu_variants
-    # We'll create a new column for n_variants = n_cpu_variants + n_gpu_variants
-    # Then rename total_time -> time
+    df_comb_raw = pd.read_csv(combined_csv)
+    # We assume the combined CSV has columns including:
+    #   simulation_name, total_time, combined_cpu_time, combined_gpu_time,
+    #   n_cpu_variants, n_gpu_variants, etc.
 
-    df_comb["n_variants"] = df_comb["n_cpu_variants"] + df_comb["n_gpu_variants"]
+    # Create n_variants = n_cpu_variants + n_gpu_variants
+    df_comb_raw["n_variants"] = df_comb_raw["n_cpu_variants"] + df_comb_raw["n_gpu_variants"]
+
+    # Real total_time as "time"
+    # Keep the original columns so we can compute naive_time
+    df_comb = df_comb_raw[[
+        "simulation_name", "total_time", "combined_cpu_time", "combined_gpu_time", "n_variants"
+    ]].copy()
+
     df_comb.rename(columns={"total_time": "time"}, inplace=True)
     df_comb["run_type"] = "Combined"
 
-    # We only need columns we plot:
-    df_comb = df_comb[["simulation_name", "n_variants", "time", "run_type"]]
+    # 3) --- Add a row for "Naive Sum" = combined_cpu_time + combined_gpu_time
+    # We’ll store it as a separate subset, then concatenate.
+    df_naive = df_comb_raw[[
+        "simulation_name", "n_variants", "combined_cpu_time", "combined_gpu_time"
+    ]].copy()
 
-    # 3) --- Concatenate sequential (CPU/GPU) and combined ---
-    df_all = pd.concat([df_seq_combined, df_comb], ignore_index=True)
+    df_naive["time"] = df_naive["combined_cpu_time"] + df_naive["combined_gpu_time"]
+    df_naive["run_type"] = "Naive Sum"
 
-    # 4) --- Convert columns to numeric just in case ---
+    # We only need these final columns for plotting
+    df_naive = df_naive[["simulation_name", "n_variants", "time", "run_type"]]
+
+    # 4) --- Combine "real combined" and "naive sum" subsets
+    df_comb_only = df_comb[["simulation_name", "n_variants", "time", "run_type"]]
+    df_combined_plus_naive = pd.concat([df_comb_only, df_naive], ignore_index=True)
+
+    # 5) --- Now combine everything: sequential CPU/GPU, real combined, naive sum
+    df_all = pd.concat([df_seq_combined, df_combined_plus_naive], ignore_index=True)
+
+    # 6) --- Convert columns to numeric just in case ---
     for col in ["n_variants", "time"]:
         df_all[col] = pd.to_numeric(df_all[col], errors="coerce")
     df_all.dropna(subset=["simulation_name", "n_variants", "time"], inplace=True)
 
-    # 5) --- For each simulation, plot overlay of three lines ---
+    # 7) --- For each simulation, plot overlay of four lines ---
+    #         (CPU-only, GPU-only, Combined, Naive Sum)
     simulations = df_all["simulation_name"].unique()
     for sim in simulations:
-        subset = df_all[df_all["simulation_name"] == sim]
+        subset = df_all[df_all["simulation_name"] == sim].copy()
 
         plt.figure(figsize=(8, 6))
         sns.lineplot(
@@ -60,7 +81,7 @@ def main(sequential_csv, combined_csv, output_prefix):
             ci=None  # No confidence intervals
         )
 
-        plt.title(f"{sim} - Overlay: Sequential CPU, Sequential GPU, Combined")
+        plt.title(f"{sim} - Overlay: Seq CPU, Seq GPU, Combined, Naive Sum")
         plt.xlabel("Number of Variants")
         plt.ylabel("Time (seconds)")
         plt.legend(title="Run Type")
@@ -74,7 +95,7 @@ def main(sequential_csv, combined_csv, output_prefix):
         print(f"Saved overlay for {sim} -> {filename}")
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Overlay sequential CPU/GPU vs. combined runs.")
+    parser = argparse.ArgumentParser(description="Overlay sequential CPU/GPU vs. combined runs plus naive sum.")
     parser.add_argument("--sequential_csv", default="performance_metrics.csv",
                         help="Path to the sequential CSV file.")
     parser.add_argument("--combined_csv", default="performance_metrics_combined.csv",
