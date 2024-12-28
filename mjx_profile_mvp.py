@@ -31,10 +31,11 @@ def track_cpu_usage(profiling_event, cpu_usage_samples):
     import psutil
     while profiling_event.is_set():
         per_core_usage = psutil.cpu_percent(interval=1, percpu=True)
-        avg_usage = sum(per_core_usage) / len(per_core_usage)  # Average across all cores
+        avg_usage = sum(per_core_usage) / len(per_core_usage)
         cpu_usage_samples.append(avg_usage)
 
-def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_processes: int, batch_size: int = 10):
+def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int,
+                        max_processes: int, batch_size: int = 10):
     print(f"Running CPU profile with {n_variants=}, {n_steps=}, {max_processes=}, {batch_size=}")
     assert 0 < max_processes <= _CPU_COUNT
 
@@ -43,11 +44,10 @@ def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_proce
     profiling_event = multiprocessing.Event()
     profiling_event.set()
 
-    # Start tracking CPU usage in a separate process
-    cpu_tracker = multiprocessing.Process(target=track_cpu_usage, args=(profiling_event, cpu_usage_samples))
+    cpu_tracker = multiprocessing.Process(target=track_cpu_usage,
+                                          args=(profiling_event, cpu_usage_samples))
     cpu_tracker.start()
 
-    # Perform profiling
     start_time = time.perf_counter()
     with ProcessPoolExecutor(max_workers=max_processes) as pool:
         tasks = [
@@ -57,11 +57,9 @@ def cpu_profile_batched(model_xml: str, n_variants: int, n_steps: int, max_proce
         _ = [task.result() for task in tasks]
     total_time = time.perf_counter() - start_time
 
-    # Stop tracking CPU usage
     profiling_event.clear()
     cpu_tracker.join()
 
-    # Calculate average CPU usage across all cores
     avg_cpu_usage = sum(cpu_usage_samples) / len(cpu_usage_samples) if cpu_usage_samples else 0
 
     print(f"Average CPU Usage during profiling (across all cores): {avg_cpu_usage:.2f}%")
@@ -97,13 +95,11 @@ def gpu_profile(model_xml: str, n_variants: int, n_steps: int):
 
     # Now measure time for the remaining steps
     t = time.perf_counter()
-    for i_steps in range(n_steps - 1):
+    for _ in range(n_steps - 1):
         mjx_datas = step(mjx_model, mjx_datas)
     elapsed = time.perf_counter() - t
 
-    # Capture peak GPU utilization using nvidia-smi
     peak_gpu_utilization = get_peak_gpu_utilization()
-
     return elapsed, peak_gpu_utilization
 
 def get_peak_gpu_utilization():
@@ -116,16 +112,16 @@ def get_peak_gpu_utilization():
         return peak_utilization
     except Exception as e:
         print(f"Error capturing GPU utilization: {e}")
-        return 0  # Default to 0 if utilization cannot be retrieved
+        return 0  # If utilization cannot be retrieved
 
-def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_processes: int, sim_name: str):
+def compare_sequential(model_xml: str, n_variants: int, n_steps: int,
+                       max_processes: int, sim_name: str):
     cpu_time, avg_cpu_usage = cpu_profile_batched(model_xml, n_variants, n_steps, max_processes)
     gpu_time, gpu_utilization = gpu_profile(model_xml, n_variants, n_steps)
 
-    # Determine which is faster
     gpu_win = "better" if gpu_time < cpu_time else "worse"
     faster, slower = (cpu_time, gpu_time)[::2 * (gpu_time > cpu_time) - 1]
-    percentage = int(100 * (slower / faster - 1))  # e.g., how much slower one is vs. the other
+    percentage = int(100 * (slower / faster - 1))
 
     gpu_cpu_ratio = 1 - gpu_time / (gpu_time + cpu_time)
 
@@ -142,18 +138,16 @@ def compare_sequential(model_xml: str, n_variants: int, n_steps: int, max_proces
         "gpu_cpu_ratio": gpu_cpu_ratio
     }
 
-def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processes: int, gpu_cpu_ratio: float, sim_name: str):
-    # Calculate the split based on ratio
+def compare_combined(model_xml: str, n_variants: int, n_steps: int,
+                     max_processes: int, gpu_cpu_ratio: float, sim_name: str):
     gpu_variants = math.floor(n_variants * gpu_cpu_ratio)
     cpu_variants = n_variants - gpu_variants
 
-    # Start the timer before launching tasks
     start_time = time.perf_counter()
     with ProcessPoolExecutor(max_workers=2) as pool:
         cpu_future = pool.submit(cpu_profile_batched, model_xml, cpu_variants, n_steps, max_processes // 2)
         gpu_future = pool.submit(gpu_profile, model_xml, gpu_variants, n_steps)
 
-        # Retrieve results
         cpu_time, avg_cpu_usage = cpu_future.result()
         gpu_time, gpu_utilization = gpu_future.result()
 
@@ -171,64 +165,69 @@ def compare_combined(model_xml: str, n_variants: int, n_steps: int, max_processe
         "n_cpu_variants": cpu_variants
     }
 
-def write_to_csv(filename, data, append=False):
-    mode = 'a' if append else 'w'
-    with open(filename, mode, newline="") as file:
+def write_sequential_csv(filename, data):
+    """
+    Writes sequential results to the specified CSV.
+    """
+    with open(filename, "w", newline="") as file:
         writer = csv.writer(file)
+        writer.writerow([
+            "simulation_name",
+            "n_variants",
+            "n_steps",
+            "cpu_time",
+            "gpu_time",
+            "gpu_win",
+            "speed_difference",
+            "gpu_utilization",
+            "avg_cpu_usage",
+            "gpu_cpu_ratio"
+        ])
+        for entry in data:
+            writer.writerow([
+                entry["simulation_name"],
+                entry["n_variants"],
+                entry["n_steps"],
+                entry["cpu_time"],
+                entry["gpu_time"],
+                entry["gpu_win"],
+                entry["speed_difference"],
+                entry["gpu_utilization"],
+                entry["avg_cpu_usage"],
+                entry["gpu_cpu_ratio"]
+            ])
+    print(f"[Sequential] Wrote results to {filename}")
 
-        if not append:
-            # Write the sequential header
+def write_combined_csv(filename, data):
+    """
+    Writes combined results to a different CSV.
+    """
+    with open(filename, "w", newline="") as file:
+        writer = csv.writer(file)
+        writer.writerow([
+            "simulation_name",
+            "total_time",
+            "combined_cpu_time",
+            "combined_gpu_time",
+            "combined_avg_cpu_usage",
+            "combined_gpu_utilization",
+            "gpu_cpu_ratio",
+            "n_gpu_variants",
+            "n_cpu_variants"
+        ])
+        for entry in data:
             writer.writerow([
-                "simulation_name",
-                "n_variants",
-                "n_steps",
-                "cpu_time",
-                "gpu_time",
-                "gpu_win",
-                "speed_difference",
-                "gpu_utilization",
-                "avg_cpu_usage",
-                "gpu_cpu_ratio"
+                entry["simulation_name"],
+                entry["total_time"],
+                entry["combined_cpu_time"],
+                entry["combined_gpu_time"],
+                entry["combined_avg_cpu_usage"],
+                entry["combined_gpu_utilization"],
+                entry["gpu_cpu_ratio"],
+                entry["n_gpu_variants"],
+                entry["n_cpu_variants"]
             ])
-            for entry in data:
-                writer.writerow([
-                    entry["simulation_name"],
-                    entry["n_variants"],
-                    entry["n_steps"],
-                    entry["cpu_time"],
-                    entry["gpu_time"],
-                    entry["gpu_win"],
-                    entry["speed_difference"],
-                    entry["gpu_utilization"],
-                    entry["avg_cpu_usage"],
-                    entry["gpu_cpu_ratio"]
-                ])
-            writer.writerow([])  # blank row
-        else:
-            # Write the combined header
-            writer.writerow([
-                "simulation_name",
-                "total_time",
-                "combined_cpu_time",
-                "combined_gpu_time",
-                "combined_avg_cpu_usage",
-                "combined_gpu_utilization",
-                "gpu_cpu_ratio",
-                "n_gpu_variants",
-                "n_cpu_variants"
-            ])
-            for entry in data:
-                writer.writerow([
-                    entry["simulation_name"],
-                    entry["total_time"],
-                    entry["combined_cpu_time"],
-                    entry["combined_gpu_time"],
-                    entry["combined_avg_cpu_usage"],
-                    entry["combined_gpu_utilization"],
-                    entry["gpu_cpu_ratio"],
-                    entry["n_gpu_variants"],
-                    entry["n_cpu_variants"]
-                ])
+    print(f"[Combined] Wrote results to {filename}")
 
 def log_sequential_result(result):
     log_message = (
@@ -255,16 +254,12 @@ def log_combined_result(result):
     )
     print(log_message)
 
-def run_sequential(simulations, simulation_variants, steps, repeat, max_processes=None):
+def run_sequential(simulations, simulation_variants, steps, repeat, seq_out_file, max_processes=None):
     """
-    - simulations: dict of {sim_name -> xml_model_str}
-    - simulation_variants: dict of {sim_name -> list of variant values}
-    - steps: a list of steps to test
-    - repeat: how many times to run each (simulation, variants, steps) combo
+    Runs sequential benchmarks and writes results to seq_out_file.
     """
     results = []
     for sim_name, model_xml in simulations.items():
-        # Get the variant list specific to this simulation
         variants_list = simulation_variants.get(sim_name, [])
         print(f"\n[Sequential] Running benchmarks for simulation: {sim_name}")
         for n_variants in variants_list:
@@ -272,35 +267,35 @@ def run_sequential(simulations, simulation_variants, steps, repeat, max_processe
                 for run_i in range(repeat):
                     print(f"  -> Repeat {run_i+1}/{repeat} for {sim_name}, variants={n_variants}, steps={n_steps}")
                     try:
-                        sequential_res = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
-                        results.append(sequential_res)
-                        log_sequential_result(sequential_res)
+                        seq_res = compare_sequential(model_xml, n_variants, n_steps, max_processes, sim_name)
+                        results.append(seq_res)
+                        log_sequential_result(seq_res)
                     except Exception as e:
-                        print(f"Error with {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+                        print(f"Error with {sim_name}, variants={n_variants}, steps={n_steps}: {e}")
 
-    # Write results once at the end
-    write_to_csv("performance_metrics.csv", results, append=False)
+    # Write all sequential results
+    write_sequential_csv(seq_out_file, results)
 
-def run_combined(simulations, simulation_variants, steps, repeat, file_path, max_processes=None):
+def run_combined(simulations, simulation_variants, steps, repeat,
+                 seq_file, comb_out_file, max_processes=None):
     """
-    Similar to run_sequential, but uses 'combined' approach with CPU+GPU ratio from
-    an existing CSV (file_path).
+    Runs combined benchmarks:
+    - Reads sequential results (gpu_cpu_ratio) from seq_file
+    - Writes combined results to comb_out_file
     """
-    # Read the 'gpu_cpu_ratio' from the CSV results of sequential runs
-    with open(file_path, mode="r") as file:
+    # 1. Read ratio from sequential CSV
+    ratio_map = {}
+    with open(seq_file, mode="r") as file:
         reader = csv.DictReader(file)
-        # build a dict: (sim_name, n_variants, n_steps) -> ratio
-        ratios = {}
         for row in reader:
-            # skip blank rows
             if not row["simulation_name"]:
                 continue
             key = (row["simulation_name"], int(row["n_variants"]), int(row["n_steps"]))
-            # convert ratio to float
             ratio_val = float(row["gpu_cpu_ratio"])
-            ratios[key] = ratio_val
+            ratio_map[key] = ratio_val
 
-    results = []
+    # 2. Run combined
+    results_combined = []
     for sim_name, model_xml in simulations.items():
         variants_list = simulation_variants.get(sim_name, [])
         print(f"\n[Combined] Running benchmarks for simulation: {sim_name}")
@@ -308,44 +303,61 @@ def run_combined(simulations, simulation_variants, steps, repeat, file_path, max
             for n_steps in steps:
                 for run_i in range(repeat):
                     key = (sim_name, n_variants, n_steps)
-                    gpu_cpu_ratio = ratios.get(key, None)
+                    gpu_cpu_ratio = ratio_map.get(key, None)
                     if gpu_cpu_ratio is None:
-                        print(f"Skipping {sim_name}, {n_variants}, {n_steps}: no ratio found in CSV.")
+                        print(f"Skipping {sim_name}, {n_variants}, {n_steps}: no ratio found in {seq_file}.")
                         continue
                     print(f"  -> Repeat {run_i+1}/{repeat} for {sim_name}, variants={n_variants}, steps={n_steps}, ratio={gpu_cpu_ratio:.2f}")
                     try:
-                        combined_res = compare_combined(model_xml, n_variants, n_steps, max_processes, gpu_cpu_ratio, sim_name)
-                        results.append(combined_res)
-                        log_combined_result(combined_res)
+                        comb_res = compare_combined(model_xml, n_variants, n_steps,
+                                                    max_processes, gpu_cpu_ratio, sim_name)
+                        results_combined.append(comb_res)
+                        log_combined_result(comb_res)
                     except Exception as e:
-                        print(f"Error with combined run for {sim_name}, n_variants={n_variants}, n_steps={n_steps}: {e}")
+                        print(f"Error with combined run for {sim_name}, {n_variants}, {n_steps}: {e}")
 
-    write_to_csv("performance_metrics.csv", results, append=True)
+    # 3. Write combined results
+    write_combined_csv(comb_out_file, results_combined)
 
 def main(simulations, simulation_variants, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
 
-    # Steps: you can also define different steps per simulation if needed,
-    # but for this example, we keep them uniform
-    steps = [1000]
-
-    parser = argparse.ArgumentParser(description="Benchmark CPU and GPU profiling for MuJoCo models (with repeats).")
+    steps = [1000]  # Example: single steps setting
+    parser = argparse.ArgumentParser(description="Benchmark CPU & GPU with sequential or combined approach.")
     parser.add_argument("benchmark_type", choices=["sequential", "combined"], help="Type of benchmark to run")
-    parser.add_argument("--file", default="performance_metrics.csv", help="CSV file to save or read results")
-    parser.add_argument("--repeat", type=int, default=3, help="Number of times to repeat each configuration")
+    parser.add_argument("--repeat", type=int, default=3, help="How many times to repeat each config")
+    
+    # We'll hard-code the file paths for clarity: 
+    # - performance_metrics.csv for sequential results
+    # - performance_metrics_combined.csv for combined results
+    # If you want to make them user-configurable, you could add more args here.
+    
     args = parser.parse_args()
-    file_path = args.file
 
     if args.benchmark_type == "sequential":
-        run_sequential(simulations, simulation_variants, steps, repeat=args.repeat, max_processes=max_processes)
-    elif args.benchmark_type == "combined":
-        run_combined(simulations, simulation_variants, steps, repeat=args.repeat, file_path=file_path, max_processes=max_processes)
+        run_sequential(
+            simulations=simulations,
+            simulation_variants=simulation_variants,
+            steps=steps,
+            repeat=args.repeat,
+            seq_out_file="performance_metrics.csv",
+            max_processes=max_processes
+        )
+    else:  # combined
+        run_combined(
+            simulations=simulations,
+            simulation_variants=simulation_variants,
+            steps=steps,
+            repeat=args.repeat,
+            seq_file="performance_metrics.csv",           # read ratio from sequential results
+            comb_out_file="performance_metrics_combined.csv",
+            max_processes=max_processes
+        )
 
-    print("All results written to performance_metrics.csv")
+    print("\nBenchmarking finished.")
 
 if __name__ == '__main__':
-    # Define simulations to benchmark
     simulations = {
         "BOX": XML_BOX,
         "BOX_AND_BALL": XML_BOX_AND_BALL,
@@ -353,12 +365,11 @@ if __name__ == '__main__':
         "HUMANOID": XML_HUMANOID,
     }
 
-    # Allow different variant lists for each simulation
     simulation_variants = {
-        "BOX": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000, 512000],
-        "BOX_AND_BALL": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000, 512000],
-        "ARM_WITH_ROPE": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768, 65536, 131072, 256000],
-        "HUMANOID": [32, 128, 256, 512, 1024, 2056, 4096, 8192,  16384, 32768],
+        "BOX": [32, 128],
+        "BOX_AND_BALL": [32, 128],
+        "ARM_WITH_ROPE": [32, 128],
+        "HUMANOID": [32, 128],
     }
 
     main(simulations, simulation_variants)
