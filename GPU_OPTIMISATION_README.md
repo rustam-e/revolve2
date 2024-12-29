@@ -32,5 +32,4 @@ python3.10 combined_viz_scripts/analyze_gpu_data_combined_time_vs_variants_vs_gp
 for measuring sequential vs combined scripts:
 
 python3.10 seq_vs_combined_viz/read_stats-matplotlib_seq_vs_combined.py
-python3.10 seq_vs_combined_viz/analyze_total_time_vs_variants_vs_gpu_percentage.py
 python3.10 seq_vs_combined_viz/analyze_gpu_data_combined.py
