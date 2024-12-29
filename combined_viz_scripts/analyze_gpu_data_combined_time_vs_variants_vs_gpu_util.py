@@ -28,7 +28,45 @@ def main(csv_file="performance_metrics_combined.csv"):
         vmax=df["combined_gpu_utilization"].max()
     )
 
-    # 6. Create a FacetGrid, one subplot per simulation
+    # 6. Get unique simulation names
+    simulation_names = df["simulation_name"].unique()
+
+    # 7. Iterate through each simulation and save individual plots
+    for simulation_name in simulation_names:
+        subset = df[df["simulation_name"] == simulation_name]
+
+        # Create a scatter plot
+        plt.figure(figsize=(8, 6))
+        scatter = plt.scatter(
+            x=subset["n_variants"],
+            y=subset["total_time"],
+            c=norm(subset["combined_gpu_utilization"]),  # map utilization to color
+            cmap="plasma",
+            edgecolor="k",
+            alpha=0.7,
+            s=60
+        )
+
+        # Set log scale for x and y axes
+        plt.xscale("log")
+        plt.yscale("log")
+
+        # Add labels and title
+        plt.xlabel("Number of Variants (log scale)")
+        plt.ylabel("Total Time (s, log scale)")
+        plt.title(f"Simulation: {simulation_name}")
+
+        # Add color bar
+        cbar = plt.colorbar(scatter)
+        cbar.set_label("GPU Utilization (%)")
+
+        # Save the plot
+        out_file = f"{simulation_name}_total_time_vs_variants_log.png"
+        plt.savefig(out_file, dpi=300)
+        plt.close()
+        print(f"Saved {out_file}")
+
+    # 8. Create a FacetGrid for combined visualization
     g = sns.FacetGrid(
         df,
         col="simulation_name",
@@ -38,7 +76,7 @@ def main(csv_file="performance_metrics_combined.csv"):
         sharey=False
     )
 
-    # 7. Define a custom scatter function
+    # 9. Define a custom scatter function
     def scatter_with_color(data, **kwargs):
         """
         Plot total_time vs. n_variants, colored by combined_gpu_utilization.
@@ -53,24 +91,24 @@ def main(csv_file="performance_metrics_combined.csv"):
             s=60
         )
 
-    # 8. Map our scatter function onto each facet
+    # 10. Map our scatter function onto each facet
     g.map_dataframe(scatter_with_color)
 
-    # 9. Use log scales (optional)
+    # 11. Use log scales (optional)
     for ax in g.axes.flatten():
         ax.set_xscale("log")
         ax.set_yscale("log")
         ax.set_xlabel("Number of Variants (log scale)")
         ax.set_ylabel("Total Time (s, log scale)")
 
-    # 10. Single color bar for the entire figure
+    # 12. Single color bar for the entire figure
     cbar_ax = g.fig.add_axes([0.92, 0.25, 0.02, 0.5])  # [left, bottom, width, height]
     sm = plt.cm.ScalarMappable(norm=norm, cmap="plasma")
     sm.set_array([])  # needed so colorbar knows the correct range
     cbar = g.fig.colorbar(sm, cax=cbar_ax)
     cbar.set_label("GPU Utilization (%)")
 
-    # 11. Adjust layout and save
+    # 13. Adjust layout and save
     plt.tight_layout(rect=[0, 0, 0.9, 1])
     out_file = "facet_total_time_vs_variants_log.png"
     plt.savefig(out_file, dpi=300)
