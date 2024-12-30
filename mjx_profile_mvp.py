@@ -323,7 +323,7 @@ def main(simulations, simulation_variants, max_processes=None):
     if max_processes is None:
         max_processes = multiprocessing.cpu_count()
 
-    steps = [32, 128, 256, 512, 1024, 2056, 4096, 8192, 16384, 32768, 65536, 131072]  # Example: single steps setting
+    steps = [32, 128, 256, 512, 1024, 2056, 4096, 8192, 16384, 32768]  # Example: single steps setting
     parser = argparse.ArgumentParser(description="Benchmark CPU & GPU with sequential or combined approach.")
     parser.add_argument("benchmark_type", choices=["sequential", "combined"], help="Type of benchmark to run")
     parser.add_argument("--repeat", type=int, default=3, help="How many times to repeat each config")
