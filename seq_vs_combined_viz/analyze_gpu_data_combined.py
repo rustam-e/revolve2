@@ -50,13 +50,12 @@ def main(csv_file="performance_metrics_combined.csv"):
             s=60
         )
 
-        # Set log scale for x and y axes
+        # Set log scale for x axis only
         plt.xscale("log")
-        plt.yscale("log")
 
         # Add labels and title
         plt.xlabel("Number of Variants (log scale)")
-        plt.ylabel("Total Time (s, log scale)")
+        plt.ylabel("Total Time (s)")
         plt.title(f"Simulation: {simulation_name}")
 
         # Add color bar
@@ -97,12 +96,11 @@ def main(csv_file="performance_metrics_combined.csv"):
     # 11. Map the custom scatter function onto each facet
     g.map_dataframe(scatter_with_color)
 
-    # 12. Log scales for each facet
+    # 12. Log scales for x axis only
     for ax in g.axes.flatten():
         ax.set_xscale("log")
-        ax.set_yscale("log")
         ax.set_xlabel("Number of Variants (log scale)")
-        ax.set_ylabel("Total Time (s, log scale)")
+        ax.set_ylabel("Total Time (s)")
 
     # 13. Add a single color bar for the entire figure
     cbar_ax = g.fig.add_axes([0.92, 0.25, 0.02, 0.5])  # [left, bottom, width, height]
