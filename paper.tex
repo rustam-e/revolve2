@@ -1,0 +1,147 @@
+\documentclass[stu,12pt,floatsintext]{apa7}
+\usepackage[american]{babel}
+\usepackage{hyperref}
+
+\usepackage{csquotes} % One of the things you learn about LaTeX is at some level, it's like magic. The references weren't printing as they should without this line, and the guy who wrote the package included it, so here it is. Because LaTeX reasons.
+\usepackage[style=apa,sortcites=true,sorting=nyt,backend=biber]{biblatex}
+\DeclareLanguageMapping{american}{american-apa} % there can be local variants to how citations are handled, this sets it to the American idiosyncrasies 
+\addbibresource{bibliography.bib} % This is the companion file to the main one you're writing. It contains all of the bibliographic info for your references. It's a little bit of a pain to get used to, but once you do, it's the best. Especially if you recycle references between papers. You only have to get the pieces in the holes once.`
+
+\usepackage[T1]{fontenc} 
+\usepackage{mathptmx} % This is the Times New Roman font, which was the norm back in my day. If you'd like to use a different font, the options are laid out here: https://www.overleaf.com/learn/latex/Font_typefaces
+
+
+% Title page stuff _____________________
+\title{Will AI further exacerbate or reduce power inequality?} % The big, long version of the title for the title page
+\shorttitle{Will AI further exacerbate or reduce power inequality?} % The short title for the header
+\author{Rustam Eynaliyev}
+\duedate{Jan 18, 2025}
+% \date{January 17, 2024} The student version doesn't use the \date command, for whatever reason
+\affiliation{Vrije Universiteit Amsterdam}
+\course{AI and Society} % LaTeX gets annoyed (i.e., throws a grumble-error) if this is blank, so I put something here. However, if your instructor will mark you off for this being on the title page, you can leave this entry blank (delete the PSY 4321, but leave the command), and just make peace with the error that will happen. It won't break the document.
+\professor{Dr. M.C.A. Klein}  
+
+
+\begin{document}
+\maketitle 
+
+Artificial Intelligence (AI) continues its rapid development. Companies openly discuss replacing workers with AI, and economists debate its future impacts on the job market. Autonomous drones are increasingly used in warfare, while a pervasive surveillance state in China raises ethical concerns. This situation prompts the question: Are we on the path to making everything worse, better, or perhaps both?
+More concretely, in this report I will focus on following question: Will AI further increase or reduce power inequality?
+
+
+In general, two main positions emerge regarding AI and inequality: one argues that AI will increase inequality, and the other that AI might reduce it.
+
+\section*{AI Will Increase Inequality}
+
+\noindent \textbf{1. Misinformation used to target minorities.}  
+AI-driven recommendation systems can boost divisive or hateful content, making it easier for malicious actors to inflame tensions among vulnerable groups. For example, since at least 2016--2017, false information circulated widely on social media in Myanmar, exacerbating ethnic tensions that led to violence and persecution of the Rohingya population \parencite{Amnesty_Rohingya_2022}. 
+
+\noindent \textbf{2. AI as a surveillance tool.}  
+AI-powered surveillance can oppress minority groups under authoritarian regimes. For example, China’s social credit system, combined with extensive surveillance technology (such as facial recognition), monitors citizens’ internet activity and public movements \parencite{BBC_China_Surveillance_2017}. Additionally, there is documented evidence of internment camps in the Xinjiang region targeting the Uyghur population \parencite{}
+
+\noindent \textbf{3. AI used for fraud targeting less tech-savvy users.}  
+AI-driven phishing, deepfakes, and social engineering schemes can be more convincing—and thus more damaging—than traditional scams. New large language models (LLMs) and generative image/video tools can be exploited to create highly customized fraudulent messages. This approach especially endangers older adults and individuals with limited digital literacy \parencite{TheConversation_Fraud_Seniors_2023}. 
+
+\noindent \textbf{4. AI in autonomous warfare.}  
+Drone technology is already altering modern conflicts, as demonstrated in the Russia–Ukraine war. Future fully autonomous drones or robotic weapon systems, which leading nations have not agreed to ban, could further widen the power gap between technologically advanced countries and those lacking such capabilities \parencite{APNews_AIFighterJet_2023}. By reducing human cost on the more advanced nations, and increasing it to the less advanced nations, inequalities and imbalances in military power may deepen leading to a new age of colonialism.
+
+\noindent \textbf{5. Biased policing of minorities.}  
+Predictive policing algorithms—often trained on historically biased or incomplete datasets—can disproportionately minority populations. This has led, in some cases, to higher arrest and imprisonment rates among underrepresented groups \parencite{MITTechReview_PredictivePolicing_2020, }. Such bias can become self-reinforcing if not addressed by transparent auditing and policy reform.
+
+\noindent \textbf{6. Election manipulation.}  
+AI-driven microtargeting techniques were brought to public attention during the Cambridge Analytica scandal \parencite{TheGreatHack_2019}. By crafting tailored messages—or discouraging targeted groups from voting—wealthy elites and political operatives skewed elections to favor their candidates. This undermines democratic principles and can concentrate power further in the hands of a few.
+
+\section*{AI Could Reduce or Mitigate Inequality}
+
+\noindent \textbf{1. Improved information access for non-English speakers.}  
+AI-powered translation and writing tools significantly reduce language barriers. They facilitate cheap, accurate translations, dubbing of video content, and assistance with academic writing for non-native English speakers \parencite{Nature2023}. This democratizes access to knowledge and publishing opportunities worldwide.
+
+\noindent \textbf{2. Higher-quality services in underserved communities.}  
+AI-based healthcare (e.g., telemedicine) and educational services are more scalable than purely human-operated systems. Tools like AI-powered tutors (such as Khan Academy’s “Khanmigo”) can personalize instruction, potentially boosting educational outcomes in resource-poor regions \parencite{KhanAcademy_Khanmigo}. Similarly, AI based diagnostic systems help doctors serve communities with limited medical infrastructure \parencite{Wotton_Bonnardot_2015}. AI systems can bring concentrated, actionable knowledge in the form of advice or with robotic systems, enable deliveries of medicines to remote regions.
+
+\noindent \textbf{3. Fact-checking and misinformation countermeasures.}  
+While AI can spread misinformation, it can also combat it. Automated fact-checkers can highlight suspicious content and identify manipulated media in real time, providing users with reliable sources \parencite{TwitterCommunityNotes_2022, Wired_Deepfakes_2020}. This can be done transparently, for example by listing references or explaining why a claim is dubious—can bolster public trust and making people aware of commonly used deception and manipulation techniques.
+
+\noindent \textbf{4. Open-source AI.}  
+Open-source frameworks and community-driven AI projects can help narrow the gap between wealthy and developing countries \parencite{Abonamah_Tariq_Shilbayeh_2021}. When cutting-edge models and research are publicly available, smaller players can benefit without bearing massive R\&D costs, potentially reducing power imbalances making armed conflicts less likely.
+
+\noindent \textbf{5. People + Ai = better people and better AI?:}  
+A better-educated and AI-savvy population is more capable of advocating for just policies and holding tech companies accountable \parencite{Floridi_AI4People_2018}. Grassroots efforts can push for stricter regulations, bias detection tools, and ethical oversight committees—ensuring that AI deployments serve the public interest without unfairly targeting groups.
+
+\noindent \textbf{6. Explainable AI.}  
+Transparency in algorithmic decision-making can help users, developers, and regulators detect and correct biases. Methods such as Shapley Additive Explanations (SHAP) reveal how input features affect model outputs \parencite{Lundberg_Lee_2017}. More advanced interpretability research (e.g., from Anthropic) further explores how current transformer models reason, offering potential pathways to fairer systems \parencite{Anthropic_Blog_2023}.
+
+
+
+\printbibliography
+
+\end{document}
+
+%% 
+%% Copyright (C) 2019 by Daniel A. Weiss <daniel.weiss.led at gmail.com>
+%% 
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License (LPPL), either
+%% version 1.3c of this license or (at your option) any later
+%% version.  The latest version of this license is in the file:
+%% 
+%% http://www.latex-project.org/lppl.txt
+%% 
+%% Users may freely modify these files without permission, as long as the
+%% copyright line and this statement are maintained intact.
+%% 
+%% This work is not endorsed by, affiliated with, or probably even known
+%% by, the American Psychological Association.
+%% 
+%% This work is "maintained" (as per LPPL maintenance status) by
+%% Daniel A. Weiss.
+%% 
+%% This work consists of the file  apa7.dtx
+%% and the derived files           apa7.ins,
+%%                                 apa7.cls,
+%%                                 apa7.pdf,
+%%                                 README,
+%%                                 APA7american.txt,
+%%                                 APA7british.txt,
+%%                                 APA7dutch.txt,
+%%                                 APA7english.txt,
+%%                                 APA7german.txt,
+%%                                 APA7ngerman.txt,
+%%                                 APA7greek.txt,
+%%                                 APA7czech.txt,
+%%                                 APA7turkish.txt,
+%%                                 APA7endfloat.cfg,
+%%                                 Figure1.pdf,
+%%                                 shortsample.tex,
+%%                                 longsample.tex, and
+%%                                 bibliography.bib.
+%% 
+%%
+%%
+%% This is file `./samples/shortsample.tex',
+%% generated with the docstrip utility.
+%%
+%% The original source files were:
+%%
+%% apa7.dtx  (with options: `shortsample')
+%% ----------------------------------------------------------------------
+%% 
+%% apa7 - A LaTeX class for formatting documents in compliance with the
+%% American Psychological Association's Publication Manual, 7th edition
+%% 
+%% Copyright (C) 2019 by Daniel A. Weiss <daniel.weiss.led at gmail.com>
+%% 
+%% This work may be distributed and/or modified under the
+%% conditions of the LaTeX Project Public License (LPPL), either
+%% version 1.3c of this license or (at your option) any later
+%% version.  The latest version of this license is in the file:
+%% 
+%% http://www.latex-project.org/lppl.txt
+%% 
+%% Users may freely modify these files without permission, as long as the
+%% copyright line and this statement are maintained intact.
+%% 
+%% This work is not endorsed by, affiliated with, or probably even known
+%% by, the American Psychological Association.
+%% 
+%% ----------------------------------------------------------------------
